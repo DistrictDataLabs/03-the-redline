@@ -28,7 +28,7 @@ for(FileName in FileList[2:length(FileList)])
 
     FileURL = paste(BLSDataURL, FileName, sep='/')
     Notes=c(Notes,paste0('Downloading ', FilePath, ' from ', FileURL))
-    download.file(FileURL, FilePath)
+    download.file(FileURL, FilePath, mode='wb')
 }
 
 Notes
