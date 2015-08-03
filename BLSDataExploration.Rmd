@@ -16,7 +16,7 @@ ProjectDir = paste0(DDLRoot,'/03-the-redline')
 DataDir = paste0(DDLRoot,'/Data')
 OrigDataDir = paste0(DataDir,'/BLSOrig')
 FilesListURL ='http://download.bls.gov/pub/time.series/cs'
-MaxRowToRead = 1000000 # data max nearly 50M but that takes a while to load
+MaxRowToRead = 100000000 # data max nearly 50M but that takes a while to load
 HeadTailN = 10 # Head and Tail sections dipslay this many rows from each dataset
 ```
 
@@ -34,7 +34,7 @@ for(FileName in dir(OrigDataDir))
     FilePath = paste(OrigDataDir, FileName, sep='/')
     if (file.size(FilePath) > 999999)
     {
-        DF = fread(FilePath,nrow=MaxRowToRead)
+        DF = fread(FilePath,nrow=MaxRowToRead,stringsAsFactors=T)
     }
     else
     {

@@ -81,7 +81,7 @@ E:\wat\misc\DDL\Data\BLSOrig>wc *
 
 str(dir(OrigDataDir))
 
-MaxRowToRead = 1000 # data max is less than 50M
+MaxRowToRead = 100000000 # data max is less than 50M
 DFs = list()
 for(FileName in dir(OrigDataDir))
 {
