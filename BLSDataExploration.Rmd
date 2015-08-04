@@ -1,0 +1,86 @@
+---
+title: "BLS Data Exploration"
+author: "Wat Hughes"
+date: "August 1, 2015"
+output: html_document
+---
+
+## Introduction
+
+This shows the str, summary, head, and tail of each of the BLS datafiles for the DDL3 project. It uses a local cache of the data rather than loading > 6 GB each time it is run. Scroll down past the data load messages to see the sections for each kind of exploratory output.
+
+```{r}
+# Modify these to fit your environment:
+DDLRoot = 'd:/RProjects'
+ProjectDir = paste0(DDLRoot,'/03-the-redline')
+DataDir = paste0(DDLRoot,'/Data')
+OrigDataDir = paste0(DataDir,'/BLSOrig')
+FilesListURL ='http://download.bls.gov/pub/time.series/cs'
+MaxRowToRead = 100000000 # data max nearly 50M but that takes a while to load
+HeadTailN = 10 # Head and Tail sections dipslay this many rows from each dataset
+```
+
+## Data Load Messages
+
+```{r, echo=FALSE}
+library(data.table)
+
+StartTime = proc.time()
+DFs = list()
+for(FileName in dir(OrigDataDir))
+{
+    print(FileName)
+    if (FileName %in% c('cs.contacts','cs.txt','cs.data.0.Current')) next # These do not contain tabular data or duplicate other files.
+
+    FilePath = paste(OrigDataDir, FileName, sep='/')
+    if (file.size(FilePath) > 999999)
+    {
+        DF = fread(FilePath,nrow=MaxRowToRead,stringsAsFactors=T)
+    }
+    else
+    {
+        DF = read.table(FilePath,header=T,nrow=MaxRowToRead,sep='\t',row.names=NULL)
+    }
+    # I am not sure why but even though some files load correctly, some start with
+    # a column "row.names" and right shift all the column names, with the last column
+    # name being assigned to a made up column of all NAs. I am sure this is related to
+    # the trailing tabs on every line except the header. Still, why inconstint loads?
+    cn = colnames(DF)
+    if (cn[1] == 'row.names')
+    {
+        DF = DF[,1:ncol(DF)-1]
+        colnames(DF) = cn[2:length(cn)]
+    }
+    DFs[[length(DFs)+1]] = list(FileName, DF)
+}
+LoadTime = proc.time()
+LoadTime - StartTime
+```
+
+## Structure
+
+```{r, echo=FALSE}
+# This is used for the print side effect of cat. Junk is ignored.
+junk = sapply(DFs, function(lDF) {(cat('\n',lDF[[1]],' ')); str(lDF[[2]])})
+```
+
+## Summary
+
+```{r, echo=FALSE}
+# This is used for the print side effect of cat. Junk is ignored.
+junk = sapply(DFs, function(lDF) {cat('\n',lDF[[1]],'\n'); print(summary(lDF[[2]]))})
+```
+
+## Head
+
+```{r, echo=FALSE}
+junk = sapply(DFs, function(lDF) {cat('\n',lDF[[1]],'\n'); print(head(lDF[[2]],n=HeadTailN))})
+```
+
+## Tail
+
+(For those datasets not completely displayed in the Head section.)
+
+```{r, echo=FALSE}
+junk = sapply(DFs, function(lDF) if (nrow(lDF[[2]]) > HeadTailN) {cat('\n',lDF[[1]],'\n'); print(tail(lDF[[2]],n=HeadTailN))})
+```
