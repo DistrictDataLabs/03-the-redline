@@ -1,5 +1,5 @@
 # Modify these to fit your environment:
-DDLRoot = 'e:/wat/misc/ddl'
+DDLRoot = 'd:/RProjects' # Oops
 ProjectDir = paste0(DDLRoot,'/03-the-redline')
 DataDir = paste0(DDLRoot,'/Data')
 OrigDataDir = paste0(DataDir,'/BLSOrig')
@@ -10,6 +10,7 @@ setwd(ProjectDir)
 dir()
 
 library(data.table)
+install.packages('data.table')
 install.packages('rvest')
 library(rvest)
 
@@ -81,6 +82,8 @@ E:\wat\misc\DDL\Data\BLSOrig>wc *
 
 str(dir(OrigDataDir))
 
+StartTime = proc.time()
+StartTime
 MaxRowToRead = 100000000 # data max is less than 50M
 DFs = list()
 for(FileName in dir(OrigDataDir))
@@ -109,6 +112,10 @@ for(FileName in dir(OrigDataDir))
     }
     DFs[[length(DFs)+1]] = list(FileName, DF)
 }
+LoadTime = proc.time()
+LoadTime
+LoadTime - StartTime
+
 # This is used for the print side effect of cat. Junk is ignored.
 junk = sapply(DFs, function(lDF) {(cat('\n',lDF[[1]],' ')); str(lDF[[2]])})
 

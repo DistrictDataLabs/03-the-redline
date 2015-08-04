@@ -11,7 +11,7 @@ This shows the str, summary, head, and tail of each of the BLS datafiles for the
 
 ```{r}
 # Modify these to fit your environment:
-DDLRoot = 'e:/wat/misc/ddl'
+DDLRoot = 'd:/RProjects'
 ProjectDir = paste0(DDLRoot,'/03-the-redline')
 DataDir = paste0(DDLRoot,'/Data')
 OrigDataDir = paste0(DataDir,'/BLSOrig')
@@ -25,6 +25,7 @@ HeadTailN = 10 # Head and Tail sections dipslay this many rows from each dataset
 ```{r, echo=FALSE}
 library(data.table)
 
+StartTime = proc.time()
 DFs = list()
 for(FileName in dir(OrigDataDir))
 {
@@ -52,6 +53,8 @@ for(FileName in dir(OrigDataDir))
     }
     DFs[[length(DFs)+1]] = list(FileName, DF)
 }
+LoadTime = proc.time()
+LoadTime - StartTime
 ```
 
 ## Structure
