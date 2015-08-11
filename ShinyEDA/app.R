@@ -2,7 +2,6 @@
 # The filename app.R is required by Shiny.
 
 library(shiny)
-# library(datasets)
 
 # Globals
 
