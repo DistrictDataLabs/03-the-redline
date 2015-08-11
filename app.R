@@ -2,32 +2,43 @@
 # The filename app.R is required by Shiny.
 
 library(shiny)
-library(datasets)
+# library(datasets)
 
 # Globals
 
 DDLRoot = 'd:/RProjects' # Oops
-DDLRoot = 'E:/wat/misc/DDL' # Oops
+# DDLRoot = 'E:/wat/misc/DDL'
 ProjectDir = paste0(DDLRoot,'/03-the-redline')
-DataDir = paste0(DDLRoot,'/Data')
+DataDir = 'Data' # paste0(DDLRoot,'/Data')
 OrigDataDir = paste0(DataDir,'/BLSOrig')
 HeadTailN = 10
-
-# Cache the data
-
-StartTime = proc.time()
-StartTime
 MaxRowToRead = 100000000 # data max is less than 50M
-DFs = list()
+
+# Cache the filelist
+
+FNs = c()
 for(FileName in dir(OrigDataDir))
 {
-    print(FileName)
+#    print(FileName)
     if (FileName %in% c('cs.contacts','cs.txt','cs.data.0.Current')) next # These do not contain tabular data or duplicate other files.
 
     FilePath = paste(OrigDataDir, FileName, sep='/')
     if (file.size(FilePath) > 999999)
     {
         next
+    }
+    else
+    {
+    }
+    FNs[length(FNs)+1] = FileName
+}
+
+LoadDataFile = function(FileName)
+{
+    StartTime = proc.time()
+    FilePath = paste(OrigDataDir, FileName, sep='/')
+    if (file.size(FilePath) > 999999)
+    {
         DF = fread(FilePath,nrow=MaxRowToRead)
     }
     else
@@ -44,15 +55,17 @@ for(FileName in dir(OrigDataDir))
         DF = DF[,1:ncol(DF)-1]
         colnames(DF) = cn[2:length(cn)]
     }
-    DFs[[length(DFs)+1]] = list(FileName, DF)
-}
-LoadTime = proc.time()
-LoadTime = LoadTime - StartTime
+    LoadTime = proc.time()
+    LoadTime = LoadTime - StartTime
+    print('Data file loaded in:')
+    print(LoadTime)
+    DF
+} # LoadDataFile
 
 # Define UI for dataset viewer application.
 
 ui = fluidPage(
-    titlePanel('Codesets'), # Application title
+    titlePanel('Codetables'), # Application title
     # Sidebar with controls to provide a caption, select a dataset,
     # and specify the number of observations to view. Note that
     # changes made to the caption in the textInput control are
@@ -61,18 +74,18 @@ ui = fluidPage(
     (
         sidebarPanel
         (
-            textInput("caption", "Caption:", "Data Summary"),
-            selectInput("dataset", "Choose a dataset:",
-                        choices = c("rock", "pressure", "cars")),
-            numericInput("obs", "Number of observations to view:", 10)
+            textInput('caption', 'Caption:', 'Data Structure'),
+            selectInput('dataset', 'Choose a codetable:',
+                        choices = FNs),
+            numericInput('obs', 'Number of observations to view:', 10)
         ),
         # Show the caption, a summary of the dataset and an HTML
         # table with the requested number of observations
         mainPanel
         (
-            h3(textOutput("caption", container = span)),
-            verbatimTextOutput("summary"),
-            tableOutput("view")
+            h3(textOutput('caption', container = span)),
+            verbatimTextOutput('summary'),
+            tableOutput('view')
         )
     )
 ) # ui
@@ -87,11 +100,7 @@ server = function(input, output)
     #  2) The computation and result are shared by all the callers
     #	  (it only executes a single time)
     datasetInput = reactive({
-        switch(input$dataset,
-            "rock" = rock,
-            "pressure" = pressure,
-            "cars" = cars
-            )
+        LoadDataFile(input$dataset)
     })
     # The output$caption is computed based on a reactive expression
     # that returns input$caption. When the user changes the
@@ -112,7 +121,7 @@ server = function(input, output)
     # (i.e. whenever the input$dataset changes)
     output$summary <- renderPrint({
         dataset <- datasetInput()
-        summary(dataset)
+        str(dataset)
     })
     # The output$view depends on both the databaseInput reactive
     # expression and input$obs, so will be re-executed whenever
