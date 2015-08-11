@@ -132,6 +132,28 @@ head(DF)
 sapply(DFs, function(lDF) lDF[[1]])
 junk = sapply(DFs, function(lDF) {(cat('\n',lDF[[1]],' ')); str(lDF[[2]])})
 
+DFs[[17]][[1]]
+str(DFs[[17]][[2]])
+table(DFs[[17]][[2]]$seasonal)
+var='seasonal'
+table(DFs[[17]][[2]][,.N,by=var])
+colnames(DFs[[17]][[2]])
+
+for(colNum in 2:ncol(DFs[[17]][[2]]))
+{
+  colName = colnames(DFs[[17]][[2]])[colNum]
+  print(DFs[[17]][[2]][,.N,by=colName])
+}
+
+DFs[[4]][[1]]
+str(DFs[[4]][[2]])
+
+for(colNum in 2:ncol(DFs[[4]][[2]]))
+{
+  colName = colnames(DFs[[4]][[2]])[colNum]
+  print(DFs[[4]][[2]][,.N,by=colName])
+}
+
 str(DFs[[3]])
 FilePath
 
