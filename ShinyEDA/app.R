@@ -2,13 +2,27 @@
 # The filename app.R is required by Shiny.
 
 library(shiny)
+require(utils)
+library(data.table)
 
 # Globals
 
-DDLRoot = 'd:/RProjects' # Oops
-# DDLRoot = 'E:/wat/misc/DDL'
+hostname = system('hostname', intern=T)
+if (hostname == 'VM-EP-3')
+{
+    DDLRoot = 'd:/RProjects' # Oops
+} else
+{
+    DDLRoot = 'E:/wat/misc/DDL'
+}
 ProjectDir = paste0(DDLRoot,'/03-the-redline')
-DataDir = 'Data' # paste0(DDLRoot,'/Data')
+if (hostname == 'VM-EP-3' | hostname == 'AJ')
+{
+    DataDir = paste0(DDLRoot,'/Data')
+} else
+{
+    DataDir = 'Data'
+}
 OrigDataDir = paste0(DataDir,'/BLSOrig')
 HeadTailN = 10
 MaxRowToRead = 100000000 # data max is less than 50M
@@ -36,27 +50,27 @@ LoadDataFile = function(FileName)
 {
     StartTime = proc.time()
     FilePath = paste(OrigDataDir, FileName, sep='/')
+    # fread ignores the first line of these codetables because that
+    # header doesn't have the trailing tab (blank column) of the data rows.
+    # So read.table is used to get the variable names.
+    # But read.table is slow and also won't handle the Windows format text lines
+    # on the Linux Shiny server at shinyapps.io,
+    # so fread is used to actually load the data. Then then variable names are fixed up.
+    namesDF = read.table(FilePath,header=F,nrow=1,sep='\t',row.names=NULL,stringsAsFactors=F)
     if (file.size(FilePath) > 999999)
     {
-        DF = fread(FilePath,nrow=MaxRowToRead)
+        drop = NULL
     }
     else
     {
-        DF = read.table(FilePath,header=T,nrow=MaxRowToRead,sep='\t',row.names=NULL)
+        drop = ncol(namesDF) + 1
     }
-    # I am not sure why but even though some files load correctly, some start with
-    # a column "row.names" and right shift all the column names, with the last column
-    # name being assigned to a made up column of all NAs. I am sure this is related to
-    # the trailing tabs on every line except the header. Still, why inconstint loads?
-    cn = colnames(DF)
-    if (cn[1] == 'row.names')
-    {
-        DF = DF[,1:ncol(DF)-1]
-        colnames(DF) = cn[2:length(cn)]
-    }
+    DF = fread(FilePath,nrow=MaxRowToRead,header=F,drop=drop)
+    setnames(DF, colnames(DF), as.matrix(namesDF)[1,])
+
     LoadTime = proc.time()
     LoadTime = LoadTime - StartTime
-    print('Data file loaded in:')
+    print('Codetable loaded in:')
     print(LoadTime)
     DF
 } # LoadDataFile
