@@ -17,7 +17,7 @@ FileListRaw = html(BLSDataURL)
 FileList = (FileListRaw %>% html_nodes('a') %>% html_text())
 
 Notes = c()
-for(FileName in FileList[2:length(FileList)])
+for(FileName in FileList[2:length(FileList)]) # [1] is [To Parent Directory]
 {
     FilePath = paste(OrigDataDir, FileName, sep='/')
     if (file.exists(FilePath))

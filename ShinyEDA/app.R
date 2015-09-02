@@ -4,81 +4,122 @@
 library(shiny)
 require(utils)
 library(data.table)
+library(rvest) # XML/HTML handling
 
 # Globals
 
 hostname = system('hostname', intern=T)
+
+if (hostname == 'AJ')
+{
+    MaxRowsToRead = 10000 # data max is less than 50M
+} else
+{
+    DDLRoot = 'E:/wat/misc/DDL'
+    MaxRowsToRead = 100000000 # data max is less than 50M
+}
 if (hostname == 'VM-EP-3')
 {
     DDLRoot = 'd:/RProjects' # Oops
 } else
 {
     DDLRoot = 'E:/wat/misc/DDL'
+    MaxRowsToRead = 10000 # data max is less than 50M
 }
-ProjectDir = paste0(DDLRoot,'/03-the-redline')
 if (hostname == 'VM-EP-3' | hostname == 'AJ')
 {
     DataDir = paste0(DDLRoot,'/Data')
+    QuietDownload = FALSE
 } else
 {
     DataDir = 'Data'
+    QuietDownload = TRUE
 }
 OrigDataDir = paste0(DataDir,'/BLSOrig')
-HeadTailN = 10
-MaxRowToRead = 100000000 # data max is less than 50M
+dir.create(OrigDataDir,recursive=T,showWarnings=F)
+CompressedRDataDir = paste0(DataDir,'/CompressedRDA')
 
-# Cache the filelist
+HeadTailN = 10
+
+# Cache the filelist from BLS into FNs
+
+BLSDataURL ='http://download.bls.gov/pub/time.series/cs'
+
+FileListRaw = html(BLSDataURL)
+FileList = (FileListRaw %>% html_nodes('a') %>% html_text())
 
 FNs = c()
-for(FileName in dir(OrigDataDir))
+for(FileName in FileList[2:length(FileList)]) # [1] is [To Parent Directory]
 {
-#    print(FileName)
     if (FileName %in% c('cs.contacts','cs.txt','cs.data.0.Current')) next # These do not contain tabular data or duplicate other files.
 
-    FilePath = paste(OrigDataDir, FileName, sep='/')
-    if (file.size(FilePath) > 999999)
-    {
-        next
-    }
-    else
-    {
-    }
     FNs[length(FNs)+1] = FileName
-}
+} # for
 
-LoadDataFile = function(FileName)
+LoadDataFile = function(FileName) # First downloads the file unless it is already local
 {
     StartTime = proc.time()
+    CompressedRDataPath = paste0(CompressedRDataDir,'/',FileName,'.rda')
     FilePath = paste(OrigDataDir, FileName, sep='/')
-    # fread ignores the first line of these codetables because that
-    # header doesn't have the trailing tab (blank column) of the data rows.
-    # So read.table is used to get the variable names.
-    # But read.table is slow and also won't handle the Windows format text lines
-    # on the Linux Shiny server at shinyapps.io,
-    # so fread is used to actually load the data. Then then variable names are fixed up.
-    namesDF = read.table(FilePath,header=F,nrow=1,sep='\t',row.names=NULL,stringsAsFactors=F)
-    if (file.size(FilePath) > 999999)
+    if (file.exists(CompressedRDataPath))
     {
-        drop = NULL
+        load(CompressedRDataPath,.GlobalEnv) # Load it in the global environment. The RDA file was created to contain 1 data.table with the name indicated by FileName.
+        Note = paste0('Loaded compressed data.table ',FileName,'.')
     }
     else
     {
-        drop = ncol(namesDF) + 1
+        # The file must be local for file.size. Plus, we use both read.table and fread so may
+        # as well download it.
+        if (file.exists(FilePath))
+        {
+            Note = paste0(FileName, ' already local.')
+        }
+        else
+        {
+            Note = paste0(FileName, ' downloaded from BLS.')
+            FileURL = paste(BLSDataURL, FileName, sep='/')
+            download.file(FileURL, FilePath, mode='wb',quiet=QuietDownload)
+        }
+        # fread ignores the first line of these codetables because that
+        # header doesn't have the trailing tab (blank column) of the data rows.
+        # So read.table is used to get the variable names.
+        # But read.table is slow and also won't handle the Windows format text lines
+        # on the Linux Shiny server at shinyapps.io,
+        # so fread is used to actually load the data. Then then variable names are fixed up.
+        namesDF = read.table(FilePath,header=F,nrow=1,sep='\t',row.names=NULL,stringsAsFactors=F)
+        if (file.size(FilePath) > 999999)
+        {
+            drop = NULL
+        }
+        else
+        {
+            drop = ncol(namesDF) + 1
+        }
+        assign(FileName,fread(FilePath,nrow=MaxRowsToRead,header=F,drop=drop),envir=.GlobalEnv)
+        setnames(get(FileName), colnames(get(FileName)), as.matrix(namesDF)[1,])
     }
-    DF = fread(FilePath,nrow=MaxRowToRead,header=F,drop=drop)
-    setnames(DF, colnames(DF), as.matrix(namesDF)[1,])
 
     LoadTime = proc.time()
     LoadTime = LoadTime - StartTime
-    print('Codetable loaded in:')
+    print(Note)
+    print('Data loaded in:')
     print(LoadTime)
-    DF
+    get(FileName)
 } # LoadDataFile
+
+# If a variable exists with the name in FileName, return it. Otherwise,
+# load it using LoadDataFile.
+
+CondLoadDataTable = function(FileName)
+{
+    mget(FileName,ifnotfound=list(LoadDataFile),inherits=T)[[1]]
+    # <sigh> get0 was running LoadDataFile even when FileName was found!
+} # CondLoadDataTable
 
 # Define UI for dataset viewer application.
 
 ui = fluidPage(
-    titlePanel('Codetables'), # Application title
+    titlePanel('Codetables WIP'), # Application title
     # Sidebar with controls to provide a caption, select a dataset,
     # and specify the number of observations to view. Note that
     # changes made to the caption in the textInput control are
@@ -113,7 +154,7 @@ server = function(input, output)
     #  2) The computation and result are shared by all the callers
     #	  (it only executes a single time)
     datasetInput = reactive({
-        LoadDataFile(input$dataset)
+        CondLoadDataTable(input$dataset)
     })
     # The output$caption is computed based on a reactive expression
     # that returns input$caption. When the user changes the
