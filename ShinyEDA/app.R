@@ -59,44 +59,62 @@ for(FileName in FileList[2:length(FileList)]) # [1] is [To Parent Directory]
 LoadDataFile = function(FileName) # First downloads the file unless it is already local
 {
     StartTime = proc.time()
+    CompressedRDataPath = paste0(CompressedRDataDir,'/',FileName,'.rda')
     FilePath = paste(OrigDataDir, FileName, sep='/')
-    # The file must be local for file.size. Plus, we use both read.table and fread so may
-    # as well download it.
-    if (file.exists(FilePath))
+    if (file.exists(CompressedRDataPath))
     {
-        Note = paste0(FileName, ' already local.')
+        load(CompressedRDataPath,.GlobalEnv) # Load it in the global environment. The RDA file was created to contain 1 data.table with the name indicated by FileName.
+        Note = paste0('Loaded compressed data.table ',FileName,'.')
     }
     else
     {
-        Note = paste0(FileName, ' downloaded from BLS.')
-        FileURL = paste(BLSDataURL, FileName, sep='/')
-        download.file(FileURL, FilePath, mode='wb',quiet=QuietDownload)
+        # The file must be local for file.size. Plus, we use both read.table and fread so may
+        # as well download it.
+        if (file.exists(FilePath))
+        {
+            Note = paste0(FileName, ' already local.')
+        }
+        else
+        {
+            Note = paste0(FileName, ' downloaded from BLS.')
+            FileURL = paste(BLSDataURL, FileName, sep='/')
+            download.file(FileURL, FilePath, mode='wb',quiet=QuietDownload)
+        }
+        # fread ignores the first line of these codetables because that
+        # header doesn't have the trailing tab (blank column) of the data rows.
+        # So read.table is used to get the variable names.
+        # But read.table is slow and also won't handle the Windows format text lines
+        # on the Linux Shiny server at shinyapps.io,
+        # so fread is used to actually load the data. Then then variable names are fixed up.
+        namesDF = read.table(FilePath,header=F,nrow=1,sep='\t',row.names=NULL,stringsAsFactors=F)
+        if (file.size(FilePath) > 999999)
+        {
+            drop = NULL
+        }
+        else
+        {
+            drop = ncol(namesDF) + 1
+        }
+        assign(FileName,fread(FilePath,nrow=MaxRowsToRead,header=F,drop=drop),envir=.GlobalEnv)
+        setnames(get(FileName), colnames(get(FileName)), as.matrix(namesDF)[1,])
     }
-    # fread ignores the first line of these codetables because that
-    # header doesn't have the trailing tab (blank column) of the data rows.
-    # So read.table is used to get the variable names.
-    # But read.table is slow and also won't handle the Windows format text lines
-    # on the Linux Shiny server at shinyapps.io,
-    # so fread is used to actually load the data. Then then variable names are fixed up.
-    namesDF = read.table(FilePath,header=F,nrow=1,sep='\t',row.names=NULL,stringsAsFactors=F)
-    if (file.size(FilePath) > 999999)
-    {
-        drop = NULL
-    }
-    else
-    {
-        drop = ncol(namesDF) + 1
-    }
-    DF = fread(FilePath,nrow=MaxRowsToRead,header=F,drop=drop)
-    setnames(DF, colnames(DF), as.matrix(namesDF)[1,])
 
     LoadTime = proc.time()
     LoadTime = LoadTime - StartTime
     print(Note)
-    print('Codetable loaded in:')
+    print('Data loaded in:')
     print(LoadTime)
-    DF
+    get(FileName)
 } # LoadDataFile
+
+# If a variable exists with the name in FileName, return it. Otherwise,
+# load it using LoadDataFile.
+
+CondLoadDataTable = function(FileName)
+{
+    mget(FileName,ifnotfound=list(LoadDataFile),inherits=T)[[1]]
+    # <sigh> get0 was running LoadDataFile even when FileName was found!
+} # CondLoadDataTable
 
 # Define UI for dataset viewer application.
 
@@ -136,7 +154,7 @@ server = function(input, output)
     #  2) The computation and result are shared by all the callers
     #	  (it only executes a single time)
     datasetInput = reactive({
-        LoadDataFile(input$dataset)
+        CondLoadDataTable(input$dataset)
     })
     # The output$caption is computed based on a reactive expression
     # that returns input$caption. When the user changes the
