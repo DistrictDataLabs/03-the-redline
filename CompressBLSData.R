@@ -1,3 +1,6 @@
+# For each relevant BLS datafile in .../BLSOrig, create a saved data.table
+# in ../CompressedRDA with the original filename with '.rda' appended.
+
 library(data.table)
 
 # Globals
@@ -14,17 +17,15 @@ if (hostname == 'VM-EP-3')
 if (hostname == 'VM-EP-3' | hostname == 'AJ')
 {
     DataDir = paste0(DDLRoot,'/Data')
-    QuietDownload = FALSE
 } else
 {
     DataDir = 'Data'
-    QuietDownload = TRUE
 }
 OrigDataDir = paste0(DataDir,'/BLSOrig')
 CompressedRDataDir = paste0(DataDir,'/CompressedRDA')
 dir.create(CompressedRDataDir,recursive=T,showWarnings=F)
 
-MaxRowsToRead = 100000000 # data max is less than 50M
+MaxRowsToRead = 100000000 # data max is almost 50M; lower this for quick tests, e.g., to 10000.
 
 # Cache the filelist from BLSOrig into FNs
 
@@ -35,6 +36,10 @@ for(FileName in dir(OrigDataDir)) # [1] is [To Parent Directory]
 
     FNs[length(FNs)+1] = FileName
 } # for
+
+# This creates a data.table named FileName using fread of a BLS format datafile named
+# FileName in the OrigDataDir, then saves that object in FileName.rda in CompressedDataDir,
+# and then removes the data.table from memory. Load and Save times are reported.
 
 LoadSaveDataFile = function(FileName)
 {
@@ -63,16 +68,16 @@ LoadSaveDataFile = function(FileName)
     {
         drop = ncol(namesDF) + 1
     }
-    DF = fread(FilePath,nrow=MaxRowsToRead,header=F,drop=drop)
-    setnames(DF, colnames(DF), as.matrix(namesDF)[1,])
+    assign(FileName,fread(FilePath,nrow=MaxRowsToRead,header=F,drop=drop))
+    setnames(get(FileName), colnames(get(FileName)), as.matrix(namesDF)[1,])
 
     LoadTime = proc.time()
     LoadTime = LoadTime - StartTime
     Note = paste0(FileName,' loaded in:')
     print(Note)
     print(LoadTime)
-    save(DF,file=SaveFilePath)
-    rm(DF)
+    save(list=FileName,file=SaveFilePath)
+    rm(list=FileName)
     SaveTime = proc.time()
     SaveTime = SaveTime - LoadTime - StartTime
     Note = paste0(FileName,' saved in:')

@@ -10,12 +10,21 @@ library(rvest) # XML/HTML handling
 
 hostname = system('hostname', intern=T)
 
+if (hostname == 'AJ')
+{
+    MaxRowsToRead = 10000 # data max is less than 50M
+} else
+{
+    DDLRoot = 'E:/wat/misc/DDL'
+    MaxRowsToRead = 100000000 # data max is less than 50M
+}
 if (hostname == 'VM-EP-3')
 {
     DDLRoot = 'd:/RProjects' # Oops
 } else
 {
     DDLRoot = 'E:/wat/misc/DDL'
+    MaxRowsToRead = 10000 # data max is less than 50M
 }
 if (hostname == 'VM-EP-3' | hostname == 'AJ')
 {
@@ -28,9 +37,9 @@ if (hostname == 'VM-EP-3' | hostname == 'AJ')
 }
 OrigDataDir = paste0(DataDir,'/BLSOrig')
 dir.create(OrigDataDir,recursive=T,showWarnings=F)
+CompressedRDataDir = paste0(DataDir,'/CompressedRDA')
 
 HeadTailN = 10
-MaxRowsToRead = 10000 # data max is less than 50M
 
 # Cache the filelist from BLS into FNs
 
