@@ -1,13 +1,15 @@
 # Exploratory Data Analysis Shiny App for Redline BLS data.
 # The filename app.R is required by Shiny.
 
-library(shiny)
-require(utils)
+library(utils)
 library(data.table)
 library(rvest) # XML/HTML handling
-library(RCurl)
+library(rdrop2)
+library(shiny)
 
-# Globals
+# Globals are first computed or just plain set to parameterize behavior.
+
+HeadTailN = 10 # Initial value to seed the GUI.
 
 hostname = system('hostname', intern=T)
 
@@ -28,7 +30,6 @@ if (hostname == 'VM-EP-3')
 if (hostname == 'VM-EP-3' | hostname == 'AJ')
 {
     QuietDownload = FALSE
-    CompressedRDataDir = paste0(DataDir,'/CompressedRDA')
 } else
 {
     DataDir = 'Data'
@@ -36,11 +37,16 @@ if (hostname == 'VM-EP-3' | hostname == 'AJ')
     QuietDownload = TRUE
 }
 OrigDataDir = paste0(DataDir,'/BLSOrig')
+CompressedRDataDir = paste0(DataDir,'/CompressedRDA')
 dir.create(OrigDataDir,recursive=T,showWarnings=F)
-############
-    CompressedRDataDir = 'https://github.com/WatHughes/RedLineData/raw/master/CompressedRDA'
+dir.create(CompressedRDataDir,recursive=T,showWarnings=F)
 
-HeadTailN = 10
+# If we don't have the data locally, check DropBox using these globals.
+
+DropBoxDataDir = '/Data'
+DropBoxCompressedRDataDir = paste0(DropBoxDataDir,'/CompressedRDA')
+# This works around an apparent limitation of publishing to shinyapps.io:
+if (!file.exists('.httr-oauth') & file.exists('httr-oauth')) {file.rename('httr-oauth','.httr-oauth')}
 
 # Cache the filelist from BLS into FNs
 
@@ -59,12 +65,21 @@ for(FileName in FileList[2:length(FileList)]) # [1] is [To Parent Directory]
 
 LoadDataFile = function(FileName) # First downloads the file unless it is already local
 {
+    Note=''
     StartTime = proc.time()
     CompressedRDataPath = paste0(CompressedRDataDir,'/',FileName,'.rda')
-    if (file.exists(CompressedRDataPath) | url.exists(CompressedRDataPath))
+    DropBoxCompressedRDataPath = paste0(DropBoxCompressedRDataDir,'/',FileName,'.rda')
+    if (!file.exists(CompressedRDataPath) & drop_exists(DropBoxCompressedRDataPath))
+    {
+        # This is the case where we don't have the file locally as required by load()
+        # but it is on DropBox. Download the file so we can use it locally.
+        drop_get(DropBoxCompressedRDataPath, CompressedRDataPath)
+        Note=paste0(Note,'Dowloaded RDA from DropBox. ')
+    }
+    if (file.exists(CompressedRDataPath))
     {
         load(CompressedRDataPath,.GlobalEnv) # Load it in the global environment. The RDA file was created to contain 1 data.table with the name indicated by FileName.
-        Note = paste0('Loaded compressed data.table ',FileName,'.')
+        Note = paste0(Note,'Loaded compressed data.table ',FileName,'.')
     }
     else
     {
