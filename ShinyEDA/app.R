@@ -5,6 +5,7 @@ library(shiny)
 require(utils)
 library(data.table)
 library(rvest) # XML/HTML handling
+library(RCurl)
 
 # Globals
 
@@ -13,31 +14,31 @@ hostname = system('hostname', intern=T)
 if (hostname == 'AJ')
 {
     MaxRowsToRead = 10000 # data max is less than 50M
+    DDLRoot = 'E:/wat/misc/DDL'
+    DataDir = paste0(DDLRoot,'/Data')
 } else
 {
-    DDLRoot = 'E:/wat/misc/DDL'
     MaxRowsToRead = 100000000 # data max is less than 50M
 }
 if (hostname == 'VM-EP-3')
 {
     DDLRoot = 'd:/RProjects' # Oops
-} else
-{
-    DDLRoot = 'E:/wat/misc/DDL'
-    MaxRowsToRead = 10000 # data max is less than 50M
+    DataDir = paste0(DDLRoot,'/RedLineData')
 }
 if (hostname == 'VM-EP-3' | hostname == 'AJ')
 {
-    DataDir = paste0(DDLRoot,'/Data')
     QuietDownload = FALSE
+    CompressedRDataDir = paste0(DataDir,'/CompressedRDA')
 } else
 {
     DataDir = 'Data'
+    CompressedRDataDir = 'https://github.com/WatHughes/RedLineData/tree/master/CompressedRDA'
     QuietDownload = TRUE
 }
 OrigDataDir = paste0(DataDir,'/BLSOrig')
 dir.create(OrigDataDir,recursive=T,showWarnings=F)
-CompressedRDataDir = paste0(DataDir,'/CompressedRDA')
+############
+    CompressedRDataDir = 'https://github.com/WatHughes/RedLineData/raw/master/CompressedRDA'
 
 HeadTailN = 10
 
@@ -60,14 +61,14 @@ LoadDataFile = function(FileName) # First downloads the file unless it is alread
 {
     StartTime = proc.time()
     CompressedRDataPath = paste0(CompressedRDataDir,'/',FileName,'.rda')
-    FilePath = paste(OrigDataDir, FileName, sep='/')
-    if (file.exists(CompressedRDataPath))
+    if (file.exists(CompressedRDataPath) | url.exists(CompressedRDataPath))
     {
         load(CompressedRDataPath,.GlobalEnv) # Load it in the global environment. The RDA file was created to contain 1 data.table with the name indicated by FileName.
         Note = paste0('Loaded compressed data.table ',FileName,'.')
     }
     else
     {
+        FilePath = paste(OrigDataDir, FileName, sep='/')
         # The file must be local for file.size. Plus, we use both read.table and fread so may
         # as well download it.
         if (file.exists(FilePath))
@@ -86,7 +87,7 @@ LoadDataFile = function(FileName) # First downloads the file unless it is alread
         # But read.table is slow and also won't handle the Windows format text lines
         # on the Linux Shiny server at shinyapps.io,
         # so fread is used to actually load the data. Then then variable names are fixed up.
-        namesDF = read.table(FilePath,header=F,nrow=1,sep='\t',row.names=NULL,stringsAsFactors=F)
+        namesDF = read.table(FilePath,header=F,nrows=1,sep='\t',row.names=NULL,stringsAsFactors=F)
         if (file.size(FilePath) > 999999)
         {
             drop = NULL
@@ -95,7 +96,7 @@ LoadDataFile = function(FileName) # First downloads the file unless it is alread
         {
             drop = ncol(namesDF) + 1
         }
-        assign(FileName,fread(FilePath,nrow=MaxRowsToRead,header=F,drop=drop),envir=.GlobalEnv)
+        assign(FileName,fread(FilePath,nrows=MaxRowsToRead,header=F,drop=drop),envir=.GlobalEnv)
         setnames(get(FileName), colnames(get(FileName)), as.matrix(namesDF)[1,])
     }
 
@@ -131,13 +132,13 @@ ui = fluidPage(
             textInput('caption', 'Caption:', 'Data Structure'),
             selectInput('dataset', 'Choose a codetable:',
                         choices = FNs),
-            numericInput('obs', 'Number of observations to view:', 10)
+            numericInput('obs','Number of observations to view:',10,min=1)
         ),
         # Show the caption, a summary of the dataset and an HTML
         # table with the requested number of observations
         mainPanel
         (
-            h3(textOutput('caption', container = span)),
+            h3(textOutput('caption',container=span)),
             verbatimTextOutput('summary'),
             tableOutput('view')
         )
