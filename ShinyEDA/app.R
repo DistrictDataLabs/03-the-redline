@@ -33,7 +33,6 @@ if (hostname == 'VM-EP-3' | hostname == 'AJ')
 } else
 {
     DataDir = 'Data'
-    CompressedRDataDir = 'https://github.com/WatHughes/RedLineData/tree/master/CompressedRDA'
     QuietDownload = TRUE
 }
 OrigDataDir = paste0(DataDir,'/BLSOrig')
@@ -135,7 +134,7 @@ CondLoadDataTable = function(FileName)
 # Define UI for dataset viewer application.
 
 ui = fluidPage(
-    titlePanel('Codetables WIP'), # Application title
+    titlePanel('BLS Datafiles'), # Application title
     # Sidebar with controls to provide a caption, select a dataset,
     # and specify the number of observations to view. Note that
     # changes made to the caption in the textInput control are
@@ -145,7 +144,7 @@ ui = fluidPage(
         sidebarPanel
         (
             textInput('caption', 'Caption:', 'Data Structure'),
-            selectInput('dataset', 'Choose a codetable:',
+            selectInput('dataset', 'Choose a datafile:',
                         choices = FNs),
             numericInput('obs','Number of observations to view:',10,min=1)
         ),
@@ -155,6 +154,7 @@ ui = fluidPage(
         (
             h3(textOutput('caption',container=span)),
             verbatimTextOutput('summary'),
+            h3('Head'),
             tableOutput('view')
         )
     )

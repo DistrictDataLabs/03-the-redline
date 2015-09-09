@@ -1,0 +1,8 @@
+name: ShinyEDA
+account: wathughes
+server: shinyapps.io
+bundleId: 257204
+url: https://wathughes.shinyapps.io/ShinyEDA
+when: 1441239003.44387
+asMultiple: FALSE
+asStatic: FALSE
