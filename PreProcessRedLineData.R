@@ -213,3 +213,19 @@ rl.weekday = data.table(weekday_id=1:nrow(cs.weekday),cs.weekday)
 rm(cs.weekday)
 SaveObjectToDataFile(rl.weekday)
 
+# Datafiles
+
+# rl.series
+
+LoadCompressedDataFile('cs.series')
+FactorCols = grep('_code$',colnames(cs.series),value=T)
+cs.series[,(FactorCols):=lapply(.SD,as.factor),.SDcols=FactorCols]
+cs.series[,seasonal:=as.factor(seasonal)]
+cs.series[,footnote_codes:=as.factor(footnote_codes)]
+cs.series[,begin_period:=as.factor(begin_period)]
+cs.series[,end_period:=as.factor(end_period)]
+cs.series[,begin_year:=as.integer(begin_year)]
+cs.series[,end_year:=as.integer(end_year)]
+rl.series = data.table(series_id=1:nrow(cs.series),cs.series)
+rm(cs.series)
+SaveObjectToDataFile(rl.series)
