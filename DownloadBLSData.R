@@ -29,8 +29,7 @@ fileGet <- function() {
       print(msg)
       Notes <- c(Notes, msg)
       count.e <- count.e + 1
-    } 
-    else {
+    } else {
       FileURL <- paste(BLSDataURL, FileName, sep='/')
       msg <- paste0('Downloading: ', FilePath, ' from: ', FileURL)
       print(msg)
