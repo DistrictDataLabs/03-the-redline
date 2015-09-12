@@ -3,13 +3,13 @@
 # directory.
 
 # Modify these to fit your environment:
-DDLRoot = 'e:/wat/misc/ddl'
+DDLRoot = '~Downloads/bls'
 ProjectDir = paste0(DDLRoot,'/03-the-redline')
 DataDir = paste0(DDLRoot,'/Data')
 OrigDataDir = paste0(DataDir,'/BLSOrig')
 BLSDataURL ='http://download.bls.gov/pub/time.series/cs'
 
-setwd(ProjectDir)
+#setwd(ProjectDir)
 
 library(rvest) # XML/HTML handling
 
