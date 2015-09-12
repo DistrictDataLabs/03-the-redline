@@ -7,16 +7,14 @@ library(data.table)
 
 hostname = system('hostname', intern=T)
 
-if (hostname == 'VM-EP-3')
-{
-    DDLRoot = 'd:/RProjects' # Oops
-} else
+if (hostname == 'AJ')
 {
     DDLRoot = 'E:/wat/misc/DDL'
-}
-if (hostname == 'VM-EP-3' | hostname == 'AJ')
-{
     DataDir = paste0(DDLRoot,'/Data')
+} else if (hostname == 'VM-EP-3')
+{
+    DDLRoot = 'd:/RProjects' # Oops
+    DataDir = paste0(DDLRoot,'/RedLineData')
 } else
 {
     DataDir = 'Data'
@@ -60,15 +58,17 @@ LoadSaveDataFile = function(FileName)
     # on the Linux Shiny server at shinyapps.io,
     # so fread is used to actually load the data. Then then variable names are fixed up.
     namesDF = read.table(FilePath,header=F,nrow=1,sep='\t',row.names=NULL,stringsAsFactors=F)
-    if (file.size(FilePath) > 999999)
+    if (file.size(FilePath) > 999999) # These don't have the spare tab problem
     {
         drop = NULL
+        skip = 1 # Skip the header that has already been read.
     }
-    else
+    else # These do, so drop that empty variable
     {
         drop = ncol(namesDF) + 1
+        skip = -1 # fread does the skip because of the spare tab.
     }
-    assign(FileName,fread(FilePath,nrow=MaxRowsToRead,header=F,drop=drop))
+    assign(FileName,fread(FilePath,nrow=MaxRowsToRead,header=F,drop=drop,skip=skip))
     setnames(get(FileName), colnames(get(FileName)), as.matrix(namesDF)[1,])
 
     LoadTime = proc.time()
