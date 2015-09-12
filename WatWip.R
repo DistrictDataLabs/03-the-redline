@@ -186,3 +186,24 @@ junk = sapply(DTs, function(lDT) {(cat('\n',lDT[[1]],' ')); str(lDT[[2]])})
 junk = sapply(DFs, function(lDF) {cat('\n',lDF[[1]],'\n'); print(summary(lDF[[2]]))})
 
 # Gratuitous Change
+
+tst = data.table('id'=1:5,'a_code'=c('a1','a2','a3','a3','a2'),'b_code'=c('b6','b4','b2','b6','b5'))
+str(tst)
+summary(tst)
+FactorCols = grep('_code$',colnames(tst),value=T)
+tst[,(FactorCols):=lapply(.SD,as.factor),.SDcols=FactorCols]
+
+FactorCols = grep('_code$',colnames(cs.series),value=T)
+cs.series[,(FactorCols):=lapply(.SD,as.factor),.SDcols=FactorCols]
+cs.series[,seasonal:=as.factor(seasonal)]
+cs.series[,footnote_codes:=as.factor(footnote_codes)]
+cs.series[,begin_period:=as.factor(begin_period)]
+cs.series[,end_period:=as.factor(end_period)]
+cs.series[,begin_year:=as.integer(begin_year)]
+cs.series[,end_year:=as.integer(end_year)]
+
+save(cs.series,file='cs.series_wip2.rda')
+str(cs.series)
+summary(cs.series)
+save(cs.series,file='cs.series_wip3.rda')
+

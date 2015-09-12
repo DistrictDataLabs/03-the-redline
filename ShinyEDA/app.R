@@ -20,7 +20,7 @@ if (hostname == 'AJ')
     DataDir = paste0(DDLRoot,'/Data')
 } else
 {
-    MaxRowsToRead = 100000000 # data max is less than 50M
+    MaxRowsToRead = 100000000 # data max is less than 50M so this gets all
 }
 if (hostname == 'VM-EP-3')
 {
@@ -29,10 +29,12 @@ if (hostname == 'VM-EP-3')
 }
 if (hostname == 'VM-EP-3' | hostname == 'AJ')
 {
+    ListRLFilesFromDropBox = FALSE # Local only
     QuietDownload = FALSE
 } else
 {
     DataDir = 'Data'
+    ListRLFilesFromDropBox = TRUE # Any local cache is still used for the actual data
     QuietDownload = TRUE
 }
 OrigDataDir = paste0(DataDir,'/BLSOrig')
@@ -47,20 +49,34 @@ DropBoxCompressedRDataDir = paste0(DropBoxDataDir,'/CompressedRDA')
 # This works around an apparent limitation of publishing to shinyapps.io:
 if (!file.exists('.httr-oauth') & file.exists('httr-oauth')) {file.rename('httr-oauth','.httr-oauth')}
 
-# Cache the filelist from BLS into FNs
+# Cache the filelist from BLS into FNsB
 
 BLSDataURL ='http://download.bls.gov/pub/time.series/cs'
 
 FileListRaw = html(BLSDataURL)
 FileList = (FileListRaw %>% html_nodes('a') %>% html_text())
 
-FNs = c()
+FNsB = c()
 for(FileName in FileList[2:length(FileList)]) # [1] is [To Parent Directory]
 {
     if (FileName %in% c('cs.contacts','cs.txt','cs.data.0.Current')) next # These do not contain tabular data or duplicate other files.
 
-    FNs[length(FNs)+1] = FileName
+    FNsB[length(FNsB)+1] = FileName
 } # for
+
+# Cache the RedLine data filelist into FNsR
+
+if (ListRLFilesFromDropBox)
+{
+    # List the directory, stipping off the pathname from each filename
+    FNsR = sub(paste0(DropBoxCompressedRDataDir,'/'),'',drop_dir(DropBoxCompressedRDataDir)$path)
+    FNsR = grep('^rl[.].*rda',FNsR,value=T,ignore.case=T) # Filter, keeping just the rl datafiles
+    FNsR = sub('[.]rda','',FNsR) # Remove .rda to make the name look better in the GUI.
+} else
+{
+    FNsR = dir(CompressedRDataDir,'^rl[.].*rda')
+    FNsR = sub('[.]rda','',FNsR) # Remove .rda to make the name look better in the GUI.
+}
 
 LoadDataFile = function(FileName) # First downloads the file unless it is already local
 {
@@ -134,30 +150,52 @@ CondLoadDataTable = function(FileName)
 # Define UI for dataset viewer application.
 
 ui = fluidPage(
-    titlePanel('BLS Datafiles'), # Application title
-    # Sidebar with controls to provide a caption, select a dataset,
-    # and specify the number of observations to view. Note that
-    # changes made to the caption in the textInput control are
-    # updated in the output area immediately as you type
-    sidebarLayout
+    tabsetPanel
     (
-        sidebarPanel
+        type = "tabs",
+        tabPanel
         (
-            textInput('caption', 'Caption:', 'Data Structure'),
-            selectInput('dataset', 'Choose a datafile:',
-                        choices = FNs),
-            numericInput('obs','Number of observations to view:',10,min=1)
+            'BLS Datafiles',
+            sidebarLayout
+            (
+                sidebarPanel
+                (
+                    selectInput('datasetB', 'Choose a datafile:',
+                                choices = FNsB),
+                    numericInput('obsB','Number of observations to view:',10,min=1)
+                ),
+                mainPanel
+                (
+                    h3('Data Structure'),
+                    verbatimTextOutput('strB'),
+                    h3('Head'),
+                    tableOutput('viewB')
+                )
+            )
         ),
-        # Show the caption, a summary of the dataset and an HTML
-        # table with the requested number of observations
-        mainPanel
+        tabPanel
         (
-            h3(textOutput('caption',container=span)),
-            verbatimTextOutput('summary'),
-            h3('Head'),
-            tableOutput('view')
+            'RedLine Datafiles',
+            sidebarLayout
+            (
+                sidebarPanel
+                (
+                    selectInput('datasetR', 'Choose a datafile:',
+                                choices = FNsR),
+                    numericInput('obsR','Number of observations to view:',10,min=1)
+                ),
+                mainPanel
+                (
+                    h3('Data Structure'),
+                    verbatimTextOutput('strR'),
+                    h3('Summary'),
+                    verbatimTextOutput('summaryR'),
+                    h3('Head'),
+                    tableOutput('viewR')
+                )
+            )
         )
-    )
+    ) # tabsetPanel
 ) # ui
 
 # Define server logic required to summarize and view the selected
@@ -169,34 +207,34 @@ server = function(input, output)
     #  1) It is only called when the inputs it depends on changes
     #  2) The computation and result are shared by all the callers
     #	  (it only executes a single time)
-    datasetInput = reactive({
-        CondLoadDataTable(input$dataset)
+    datasetInputB = reactive({
+        CondLoadDataTable(input$datasetB)
     })
-    # The output$caption is computed based on a reactive expression
-    # that returns input$caption. When the user changes the
-    # "caption" field:
-    #
-    #  1) This function is automatically called to recompute the
-    #     output
-    #  2) The new caption is pushed back to the browser for
-    #     re-display
-    #
-    # Note that because the data-oriented reactive expressions
-    # below don't depend on input$caption, those expressions are
-    # NOT called when input$caption changes.
-    output$caption = renderText({input$caption})
-    # The output$summary depends on the datasetInput reactive
+    # The output$str depends on the datasetInput reactive
     # expression, so will be re-executed whenever datasetInput is
     # invalidated
     # (i.e. whenever the input$dataset changes)
-    output$summary <- renderPrint({
-        dataset <- datasetInput()
+    output$strB = renderPrint({
+        dataset = datasetInputB()
         str(dataset)
     })
     # The output$view depends on both the databaseInput reactive
     # expression and input$obs, so will be re-executed whenever
     # input$dataset or input$obs is changed.
-    output$view <- renderTable({head(datasetInput(), n = input$obs)})
+    output$viewB = renderTable({head(datasetInputB(), n = input$obsB)})
+    # RedLine Data
+    datasetInputR = reactive({
+        CondLoadDataTable(input$datasetR)
+    })
+    output$strR = renderPrint({
+        dataset = datasetInputR()
+        str(dataset)
+    })
+    output$summaryR = renderPrint({
+        dataset = datasetInputR()
+        summary(dataset)
+    })
+    output$viewR = renderTable({head(datasetInputR(), n = input$obsR)},include.rownames=F)
 } # server
 
 shinyApp(ui, server)
