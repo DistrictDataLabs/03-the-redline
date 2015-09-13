@@ -1,0 +1,246 @@
+head(iris)
+virginica <- iris[, "virginica"]
+virginica <- iris[, "species"=virginica]
+virginica <- iris[, "species"=="virginica"]
+virginica
+iris
+virginica <- iris[101:150, ]
+virginica
+Sepal_Length <- virginica[, "Sepal_Length"]
+Sepal_Length <- virginica[, "Sepal.Length"]
+mean(Sepal_Length)
+colMeans(iris)
+iris_means <- colMeans(iris)
+apply(iris[. 1:4], 2, mean)
+apply(iris[, 1:4], 2, mean)
+apply(iris[, 1:4], 1, mean)
+library(datasets)
+data(mtcars)
+?mtcars
+mean(mtcars$mpg, mtcars$cyl)
+mpg.cyl <- mean(mtcars$mpg, mtcars$cyl)
+?mtcars
+mtcars
+4.cyl <- mtcars[, "cyl"=4]
+4cyl <- mtcars[, "cyl"==4]
+4c <- mtcars[, "cyl"==4]
+Four.cyl <- mtcars[, "cyl"==4]
+Four.cyl
+Four.cyl <- mtcars[, "cyl"=="4"]
+Four.cyl
+Four <- mtcars[, "cyl"==4]
+Four
+Four <- mtcars[, "cyl"=4]
+Four <- mtcars[, "cyl"==4]
+Four
+?subset
+Four <- subset(mtcars$cyl==4)
+debug(ls)
+ls
+undebug(ls)
+ls
+mtcars
+Four.cyl <- mtcars[mtcars$cyl==4, ]
+Four.cyl
+Four.cyl.hp <- Four.cyl[, "hp"]
+mean(Four.cyl.hp)
+Four.cyl.hp.mean <- mean(Four.cyl.hp)
+Eight.cyl <- mtcars[mtcars$cyl==8, ]
+Eight.cyl.hp <- Eight.cyl[, "hp"]
+Eight.cyl.hp.mean <- mean(Eight.cyl.hp)
+Four.cyl.hp.mean - Eight.cyl.hp.mean
+?cor
+swirl()
+library(swirl)
+swirl()
+submit()
+mad_libs("Argentina", "Lindo", "Painting")
+submit()
+submit
+submit()
+bye()
+swirl()
+my_vector <- 1:20
+my_vector
+dim(my_vector)
+length(my_vector)
+dim(my_vector) <- c(4,5)
+dim(my_vector)
+attributes(my_vector)
+my_vector
+class(my_vector)
+my_matrix <- my_matrix
+my_matrix <- my_vector
+?matrix
+play()
+c(1:16)
+vec <- 1:16
+matrix (vec, 4, 4)
+matrix (vec, 4)
+https://github.com/iancummins2/ProgrammingAssignment2.git
+git clone https://github.com/iancummins2/ProgrammingAssignment2.git
+$ git clone https://github.com/iancummins2/ProgrammingAssignment2.git
+git clone https://github.com/iancummins2/ProgrammingAssignment2.git
+?git clone
+?ls
+$ git clone https://github.com/iancummins2/ProgrammingAssignment2.git
+git clone https://github.com/iancummins2/ProgrammingAssignment2.git
+which git
+git close https://github.com/iancummins2/ProgrammingAssingment2
+git clone https://github.com/iancummins2/ProgrammingAssingment2
+git clone https://github.com/iancummins2/ProgrammingAssingment2.git
+git clone https://github.com/iancummins2/ProgrammingAssignment2.git
+library(swirl)
+swirl()
+ls()
+class(plants)
+dim(plants)
+nrow(plants)
+ncol(plants)
+object.size(plants)
+names(plants)
+head(Duration)
+head(plants)
+head(plants, 10)
+tail(plants, 15)
+summary(plants)
+table(plants$Active_Growth_Period)
+str(plants)
+d1 <- Sys.Date()
+class(d1)
+unclass(d1)
+d1
+d2 <- as.Date("1969-01-01")
+unclass(d2)
+t1 <- Sys.time()
+t1
+class(t1)
+unclass(t1)
+t2 <- as.POSIXlt(Sys.time())
+t2
+class(t2)
+unclass(t2)
+t2
+unclass(t2)
+str(unclass(t2))
+t2$min
+weekdays(d1)
+months(t1)
+quarters(t2)
+t3 <- "October 17, 1986 08:24"
+t4 <- strptime(t3, "%B %d, %Y %H:%M")
+t4
+class(t4)
+Sys.time() > t1
+Sys.time() - t1
+difftime(Sys.time(), t1, units = 'days')
+submit()
+quit()
+library(swirl)
+swirl()
+?matrix
+my_matrix2 <- matrix(1:20, nrow = 4, ncol = 5)
+identical(my_matrix, my_matrix2)
+patients <- c('Bill', 'Gina', 'Kelly', 'Sean')
+cbind(patients, my_matrix)
+my_data <- data.frame(patients, my_matrix)
+my_data
+class(my_data)
+cnames <- c('patient', 'age', 'weight', 'bp', 'rating', 'test')
+colnames(my_data, cnames)
+colnames(my_data, , cnames)
+colnames(my_data) <- cnames
+my_data
+library(swirl)
+install_from_swirl("Exploratory Data Analysis")
+library(swirl)
+swirl()
+head(pollution)
+dim(pollution)
+summary(pollution$pm25)
+quantile(ppm)
+boxplot(ppm)
+boxplot(ppm, col="blue")
+abline(h=12)
+abline(pms, h=12)
+abline?
+?abline
+abline?
+abline(h=12, untf=FALSE)
+abline(pm, h=12)
+quit
+abline(h=12)
+quit
+info()
+main()
+2
+3
+abline(h=12)
+hist(ppm, col="green")
+rug(ppm)
+x
+g
+r
+a
+bye()
+swirl()
+rug(ppm)
+low
+high
+hist(ppm, col="green", breaks=100)
+rug(ppm)
+main()
+rug(ppm)
+hist(ppm, col="green")
+abline(v=12, lwd=2)
+abline(v=median(ppm), col="magenta", lwd=4)
+names(pollution)
+reg <- table(pollution$region)
+reg
+barplot(reg, col="wheat", main="Number of Counties in Each Region")
+boxplot(pm25~region, col="red")
+boxplot(pollution$pm25~region, col="red")
+boxplot(data=pollution, col="red")
+boxplot(ppm=data, col="red")
+main()
+boxplot(data=ppm, col="red")
+boxplot(ppm, col="red")
+boxplot(pm25~region, data=pollution, col="red")
+par(mfrom=c(2,1), mar=c(4,4,2,1))
+par(mfrow=c(2,1), mar=c(4,4,2,1))
+east <- subset(pollution, region=="east")
+head(east)
+hist(east$pm25, col="green")
+hist((subset(pollution, region=="east")$pm25, col="green")
+hist(subset(pollution, region=="east")$pm25, col="green")
+hist(subset(pollution, region=="west")$pm25, col="green")
+?plot
+plot(pollution, plot())
+bye()
+swirl()
+plot(pollution, plot())
+plot(pollution, plot(pm25, latitude))
+plot(pollution, pm, latitude)
+plot(pollution, pm25)
+plot(pollution)
+with(pollution, plot(latitude, pm25))
+abline(h=12, lwd=2, lty=2)
+plot(pollution$latitude, pollution$ppm, col=pollution$region)
+plot(pollution$latitude, ppm, col=pollution$region)
+abline(h=12, lwd=2, lty=2)
+par(mfrow=c(1,2), mar=c(5,4,2,1))
+west <- subset(pollution, )
+west <- subset(pollution, region="west")
+west <- subset(pollution, region=="west")
+plot(west$latitude, west$pm25, main=)
+plot(west$latitude, west$pm25, main="West")
+east <- subset(pollution, region=="east")
+plot(east$latitude, east$pm25, main="East")
+library(shiny)
+install.packages("shiny")
+library(shiny)
+runExample("01_hello")
+set("Data_Science")
+setwd("Data_Science")
+dir.create("App-1")
+runApp("App-1")
