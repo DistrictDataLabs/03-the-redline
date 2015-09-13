@@ -215,17 +215,67 @@ SaveObjectToDataFile(rl.weekday)
 
 # Datafiles
 
+# rl.data (from cs.data.1.AllData)
+
+LoadCompressedDataFile('cs.data.1.AllData')
+FactorCols = c('year','period','footnote_codes')
+cs.data.1.AllData[,(FactorCols):=lapply(.SD,as.factor),.SDcols=FactorCols]
+rl.data = data.table(datum_id=1:nrow(cs.data.1.AllData),cs.data.1.AllData)
+rm(cs.data.1.AllData)
+SaveObjectToDataFile(rl.data)
+
+# rl.data.series_id
+
+rl.data.series_id = data.table(series_id=rl.data$series_id)
+SaveObjectToDataFile(rl.data.series_id)
+
+# rl.data.year
+
+rl.data.year = data.table(year=rl.data$year)
+SaveObjectToDataFile(rl.data.year)
+
+# rl.data.value
+
+rl.data.value = data.table(value=rl.data$value)
+SaveObjectToDataFile(rl.data.value)
+
 # rl.series
 
 LoadCompressedDataFile('cs.series')
 FactorCols = grep('_code$',colnames(cs.series),value=T)
+FactorCols = c(FactorCols,'seasonal','footnote_codes','begin_period','end_period','begin_year','end_year')
 cs.series[,(FactorCols):=lapply(.SD,as.factor),.SDcols=FactorCols]
-cs.series[,seasonal:=as.factor(seasonal)]
-cs.series[,footnote_codes:=as.factor(footnote_codes)]
-cs.series[,begin_period:=as.factor(begin_period)]
-cs.series[,end_period:=as.factor(end_period)]
-cs.series[,begin_year:=as.integer(begin_year)]
-cs.series[,end_year:=as.integer(end_year)]
-rl.series = data.table(series_id=1:nrow(cs.series),cs.series)
+# Note that series has a variable series_id that is in fact unique, but is char not int.
+rl.series = data.table(s_id=1:nrow(cs.series),cs.series)
 rm(cs.series)
 SaveObjectToDataFile(rl.series)
+
+# rl.series.series_id
+
+rl.series.series_id = data.table(series_id=rl.series$series_id)
+SaveObjectToDataFile(rl.series.series_id)
+
+# rl.series.age_code
+
+rl.series.age_code = data.table(age_code=rl.series$age_code)
+SaveObjectToDataFile(rl.series.age_code)
+
+# rl.series.pob_code
+
+rl.series.pob_code = data.table(pob_code=rl.series$pob_code)
+SaveObjectToDataFile(rl.series.pob_code)
+
+# rl.series.nature_code
+
+rl.series.nature_code = data.table(nature_code=rl.series$nature_code)
+SaveObjectToDataFile(rl.series.nature_code)
+
+# rl.series.industry_code
+
+rl.series.industry_code = data.table(industry_code=rl.series$industry_code)
+SaveObjectToDataFile(rl.series.industry_code)
+
+# rl.series.source_code
+
+rl.series.source_code = data.table(source_code=rl.series$source_code)
+SaveObjectToDataFile(rl.series.source_code)
