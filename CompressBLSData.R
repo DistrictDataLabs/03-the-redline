@@ -7,6 +7,8 @@ library(data.table)
 
 hostname = system('hostname', intern=T)
 
+# Add support for your system by name by adding another else if...
+
 if (hostname == 'AJ')
 {
     DDLRoot = 'E:/wat/misc/DDL'
@@ -15,9 +17,10 @@ if (hostname == 'AJ')
 {
     DDLRoot = 'd:/RProjects' # Oops
     DataDir = paste0(DDLRoot,'/RedLineData')
-} else
+} else # Wayne's system, name not yet recorded here.
 {
-    DataDir = 'Data'
+    DDLRoot = '~/Downloads/bls'
+    DataDir = paste0(DDLRoot,'/Data')
 }
 OrigDataDir = paste0(DataDir,'/BLSOrig')
 CompressedRDataDir = paste0(DataDir,'/CompressedRDA')
