@@ -22,6 +22,7 @@ if (hostname == 'AJ')
     DataDir = paste0(DDLRoot,'/RedLineData')
 } else # Wayne's system, name not yet recorded here.
 {
+    DDLRoot = 'Data_Science/DDL Incubator Program' # Ian
     DDLRoot = '~/Downloads/bls'
     DataDir = paste0(DDLRoot,'/Data')
 }
