@@ -4,7 +4,7 @@
 library(utils)
 library(data.table)
 library(rvest) # XML/HTML handling
-library(rdrop2)
+library(rdrop2) # Dropbox wrapper
 library(shiny)
 
 # Globals are first computed or just plain set to parameterize behavior.
@@ -53,7 +53,7 @@ if (!file.exists('.httr-oauth') & file.exists('httr-oauth')) {file.rename('httr-
 
 BLSDataURL ='http://download.bls.gov/pub/time.series/cs'
 
-FileListRaw = html(BLSDataURL)
+FileListRaw = read_html(BLSDataURL)
 FileList = (FileListRaw %>% html_nodes('a') %>% html_text())
 
 FNsB = c()
