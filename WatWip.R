@@ -207,3 +207,84 @@ str(cs.series)
 summary(cs.series)
 save(cs.series,file='cs.series_wip3.rda')
 
+# Wip on putting the industry (code) data into the indicated tree structure.
+setkey(rl.industry,sort_sequence)
+
+
+
+# This is phase 2. See below for more info.
+
+PopulateSubTree = function(dt,RowNum) # All children, recursively. Designed for use by MakeCodeTree
+{
+    CurrentCodeDef = dt[RowNum,]
+    ret = list(me=CurrentCodeDef,children=list())
+    ChildrenRNs = which(dt$parent_rn == RowNum)
+    for(ThisChildRN in ChildrenRNs)
+    {
+        ThisChildSubTree = PopulateSubTree(dt,ThisChildRN)
+        ret[[2]] = list.append(ret[[2]],ThisChildSubTree)
+        cl = length(ret[[2]])
+        rl = length(ret)
+#        fl = length(list.flatten(ret))
+#        tl = cl + rl # To hang a breakpoint
+    }
+    return(ret)
+} # PopulateSubTree
+
+
+
+# Many of the BLS code tables encode a hierarchy using sort_sequence and display_level.
+# This routine builds the tree structure. That will be useful for the GUI. There are
+# two phases. First the parent row numbers are computed. Then these drive the actual
+# tree building. Conventional (C++, etc.) recursive approaches don't work in R because
+# there are no reasonable 'back pointers' into the tree in progress.
+
+MakeCodeTree = function(dt)
+{
+    setkey(dt,sort_sequence)
+    MaxRow = nrow(dt)
+    dt[,rn:=1:MaxRow] # Will compute each row's Parent RowNum and put it here.
+    dt[,parent_rn:=0] # Will compute each row's Parent RowNum and put it here.
+    CurrentDisplayLevel = 0
+
+    for(RowNum in 2:MaxRow)
+    {
+        dl = dt[RowNum,]$display_level
+        if (dl == CurrentDisplayLevel)
+        {
+            dt[RowNum]$parent_rn = dt[RowNum-1]$parent_rn
+        } else if (dl > CurrentDisplayLevel) # Moving down the tree, so this node is a child
+        {
+            dt[RowNum]$parent_rn = RowNum-1
+            CurrentDisplayLevel = dl
+        } else # Jumping back up to a different branch
+        {
+            CondSiblingRowNum = RowNum-1
+            while(dl < CurrentDisplayLevel)
+            {
+                CondSiblingRowNum = dt[CondSiblingRowNum,]$parent_rn
+                CurrentDisplayLevel = dt[CondSiblingRowNum,]$display_level
+            }
+            dt[RowNum]$parent_rn = dt[CondSiblingRowNum]$parent_rn
+        }
+    } # Parent row number loop
+
+    # dt as computed here when called with rl.industry:
+    # Classes ‘data.table’ and 'data.frame':	1281 obs. of  8 variables:
+    #  $ industry_id  : int  1 1249 1252 1253 7 2 3 4 5 6 ...
+    #  $ industry_code: chr  "000000" "GP1AAA" "GP1NRM" "GP2AFH" ...
+    #  $ industry_text: chr  "All workers" "Goods-producing" "Natural resources and mining" "Agriculture, forestry, fishing and hunting" ...
+    #  $ display_level: int  0 1 2 3 4 5 5 5 5 5 ...
+    #  $ selectable   : logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
+    #  $ sort_sequence: int  1 2 3 4 5 6 16 20 31 38 ...
+    #  $ rn           : int  1 2 3 4 5 6 7 8 9 10 ...
+    #  $ parent_rn    : num  0 1 2 3 4 5 5 5 5 5 ...
+    #  - attr(*, ".internal.selfref")=<externalptr>
+    #  - attr(*, "sorted")= chr "sort_sequence"
+
+    ret = PopulateSubTree(dt,1)
+    return(ret)
+} # MakeCodeTree
+
+ct = MakeCodeTree(rl.industry)
+
