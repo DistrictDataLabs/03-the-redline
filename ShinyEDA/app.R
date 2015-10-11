@@ -7,6 +7,10 @@ library(rvest) # XML/HTML handling
 library(rdrop2) # Dropbox wrapper
 library(shiny)
 
+library('shinyTree')
+
+source('MakeCodeTree.R')
+
 # Globals are first computed or just plain set to parameterize behavior.
 
 HeadTailN = 10 # Initial value to seed the GUI.
@@ -77,6 +81,8 @@ if (ListRLFilesFromDropBox)
     FNsR = dir(CompressedRDataDir,'^rl[.].*rda')
     FNsR = sub('[.]rda','',FNsR) # Remove .rda to make the name look better in the GUI.
 }
+
+FNsT = c('rl.industry')
 
 LoadDataFile = function(FileName) # First downloads the file unless it is already local
 {
@@ -203,17 +209,17 @@ ui = fluidPage(
                 sidebarPanel
                 (
                     selectInput('datasetT', 'Choose a datafile:',
-                                choices = FNsR),
+                                choices = FNsT),
                     numericInput('obsT','Number of observations to view:',10,min=1)
                 ),
                 mainPanel
                 (
                     h3('Data Structure'),
                     verbatimTextOutput('strT'),
-                    h3('Summary'),
-                    verbatimTextOutput('summaryT'),
-                    h3('Head'),
-                    tableOutput('viewT')
+                    h3('Currently Selected:'),
+                    verbatimTextOutput("selTxt"),
+                    hr(),
+                    shinyTree('tree')
                 )
             )
         )
@@ -265,11 +271,26 @@ server = function(input, output)
         dataset = datasetInputT()
         str(dataset)
     })
-    output$summaryR = renderPrint({
-        dataset = datasetInputT()
-        summary(dataset)
+
+    output$tree <- renderTree({
+        list(
+            root1 = structure("123"),
+            root2 = list(
+                SubListA = list(leaf1 = "", leaf2 = "", leaf3=""),
+                SubListB = list(leafA = "", leafB = "")
+            )
+        )
     })
-    output$viewT = renderTable({head(datasetInputT(), n = input$obsT)},include.rownames=F)
+    output$selTxt <- renderText({
+        tree <- input$tree
+        if (is.null(tree))
+        {
+            'None'
+        } else
+        {
+            unlist(get_selected(tree))
+        }
+    })
 } # server
 
 shinyApp(ui, server)
