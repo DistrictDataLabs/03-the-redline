@@ -194,6 +194,28 @@ ui = fluidPage(
                     tableOutput('viewR')
                 )
             )
+        ),
+        tabPanel
+        (
+            'Sample Tree Control for BLS Industry Hierarchy',
+            sidebarLayout
+            (
+                sidebarPanel
+                (
+                    selectInput('datasetT', 'Choose a datafile:',
+                                choices = FNsR),
+                    numericInput('obsT','Number of observations to view:',10,min=1)
+                ),
+                mainPanel
+                (
+                    h3('Data Structure'),
+                    verbatimTextOutput('strT'),
+                    h3('Summary'),
+                    verbatimTextOutput('summaryT'),
+                    h3('Head'),
+                    tableOutput('viewT')
+                )
+            )
         )
     ) # tabsetPanel
 ) # ui
@@ -235,6 +257,19 @@ server = function(input, output)
         summary(dataset)
     })
     output$viewR = renderTable({head(datasetInputR(), n = input$obsR)},include.rownames=F)
+    # Code Hierarchy
+    datasetInputT = reactive({
+        CondLoadDataTable(input$datasetT)
+    })
+    output$strT = renderPrint({
+        dataset = datasetInputT()
+        str(dataset)
+    })
+    output$summaryR = renderPrint({
+        dataset = datasetInputT()
+        summary(dataset)
+    })
+    output$viewT = renderTable({head(datasetInputT(), n = input$obsT)},include.rownames=F)
 } # server
 
 shinyApp(ui, server)
