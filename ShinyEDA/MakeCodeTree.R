@@ -21,6 +21,10 @@ MakeCodeTree = function(CodeData) # data.table version of an appropriate BLS cod
     # corresponds to the direct children of the first element/row. Repeat for each element
     # of children until there's no more data.
     CachedCodeTree = NULL
+    # This will be a nested list. The list structure is converted to the displayed tree
+    # structure by shinyTree with the element names becoming node display text and with
+    # non list valued element values ignored. Non list valued element's names are leaves.
+    CachedDisplayTree = NULL
 
     GetAugmentedCodeData = function()
     {
@@ -33,6 +37,13 @@ MakeCodeTree = function(CodeData) # data.table version of an appropriate BLS cod
         CondCacheCodeTree()
         return(CachedCodeTree)
     } # GetCodeTree
+
+    GetDisplayTree = function()
+    {
+        CondCacheDisplayTree()
+        # browser() # Breakpoints seem a little flaky in Shiny.
+        return(CachedDisplayTree)
+    } # GetDisplayTree
 
     CondCacheCodeTree = function() # And also AugmentedCodeData
     {
@@ -107,10 +118,55 @@ MakeCodeTree = function(CodeData) # data.table version of an appropriate BLS cod
         return(ret)
     } # PopulateSubTree
 
+    CondCacheDisplayTree = function()
+    {
+        CondCacheCodeTree()
+        if (is.null(CachedDisplayTree))
+        {
+            CachedDisplayTree <<- list( # Junk development code
+                '1' = '',
+                '2' = list(
+                    '3' = list(leaf1 = '', leaf2 = NULL, leaf3=''),
+                    '4' = list(leafA = '', leafB = '')
+                )
+            )
+            CachedDisplayTree <<- PopulateSubDisplayTree(1) # Real code
+            names(CachedDisplayTree) <<- 'All' # This is where ShinyTree wants the text
+        }
+    } # CondCacheDisplayTree
+
+    PopulateSubDisplayTree = function(RowNum) # And all children, recursively. Phase 3
+    {
+        CurrentCodeDef = AugmentedCodeData[RowNum,]
+        ret = list('')
+        ChildrenRNs = which(AugmentedCodeData$parent_rn == RowNum)
+        FirstTime = T
+        for(ThisChildRN in ChildrenRNs)
+        {
+            ThisChildSubTree = PopulateSubDisplayTree(ThisChildRN)
+            ThisChildCodeDef = AugmentedCodeData[ThisChildRN,]
+            ThisChildDisplayText = ThisChildCodeDef$industry_text
+            if (FirstTime)
+            {
+                FirstTime = F
+                ret[[1]] = ThisChildSubTree # Replacing '' as the first element
+                names(ret)[1] = ThisChildDisplayText
+            }
+            else
+            {
+                ret = list.append(ret,ThisChildSubTree)
+                names(ret)[length(names(ret))] = ThisChildDisplayText
+            }
+            # browser()
+            rl = length(ret)
+        }
+        return(ret)
+    } # PopulateSubDisplayTree
     # These are the only public methods for a CodeTree
 
     list(GetAugmentedCodeData = GetAugmentedCodeData, # This method is intended for troubleshooting or EDA
-         GetCodeTree = GetCodeTree # This returns the code tree as a nested list, building it and caching it if needed
+         GetCodeTree = GetCodeTree, # This returns the code tree as a nested list, building it and caching it if needed
+         GetDisplayTree = GetDisplayTree # This returns the display text tree as a nested list, building it and caching it if needed.
     )
 } # MakeCodeTree
 

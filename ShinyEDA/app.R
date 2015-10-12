@@ -82,7 +82,7 @@ if (ListRLFilesFromDropBox)
     FNsR = sub('[.]rda','',FNsR) # Remove .rda to make the name look better in the GUI.
 }
 
-FNsT = c('rl.industry')
+FNsT = list(rl.industry=MakeCodeTree(rl.industry),rl.source=MakeCodeTree(rl.source))
 
 LoadDataFile = function(FileName) # First downloads the file unless it is already local
 {
@@ -209,7 +209,7 @@ ui = fluidPage(
                 sidebarPanel
                 (
                     selectInput('datasetT', 'Choose a datafile:',
-                                choices = FNsT),
+                                choices = names(FNsT)),
                     numericInput('obsT','Number of observations to view:',10,min=1)
                 ),
                 mainPanel
@@ -273,13 +273,9 @@ server = function(input, output)
     })
 
     output$tree <- renderTree({
-        list(
-            root1 = structure("123"),
-            root2 = list(
-                SubListA = list(leaf1 = "", leaf2 = "", leaf3=""),
-                SubListB = list(leafA = "", leafB = "")
-            )
-        )
+        DisplayTree = FNsT[[1]]$GetDisplayTree()
+        # browser() # Breakpoints seem flaky in Shiny
+        DisplayTree
     })
     output$selTxt <- renderText({
         tree <- input$tree
@@ -288,7 +284,27 @@ server = function(input, output)
             'None'
         } else
         {
-            unlist(get_selected(tree))
+            sel = get_selected(tree)
+            ss = unlist(sel)
+#            browser() # sel is a list of 1, the name of selected node, with the path to the root available as the ancestry attribute.
+            if (is.null(ss))
+            {
+                selTxt = 'Nothing selected.'
+            }
+            else if(T)
+            {
+                selTxt = ss
+            } # Below here is WIP
+            else if(is.na(as.integer(ss)))
+            {
+                selTxt = paste0('Cannot find sort_sequence ',ss)
+            }
+            else
+            {
+                adt = FNsT[[1]]$GetAugmentedCodeData()
+                selTxt = adt[as.integer(ss)]$industry_text
+            }
+            selTxt
         }
     })
 } # server
