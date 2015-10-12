@@ -25,24 +25,27 @@ MakeCodeTree = function(CodeData) # data.table version of an appropriate BLS cod
     # structure by shinyTree with the element names becoming node display text and with
     # non list valued element values ignored. Non list valued element's names are leaves.
     CachedDisplayTree = NULL
+    # The column number of the descritptive field, e.g., industry_text.
+    DisplayTextColumn = grep('_text$',names(CodeData))
+    DisplayTextColumnName = names(CodeData)[DisplayTextColumn] # Guess
 
     GetAugmentedCodeData = function()
     {
         CondCacheCodeTree() # If needed calls CacheParentRNs() which adds variables rn and parent_rn
-        return(AugmentedCodeData)
+        AugmentedCodeData
     } # GetAugmentedCodeData
 
     GetCodeTree = function()
     {
         CondCacheCodeTree()
-        return(CachedCodeTree)
+        CachedCodeTree
     } # GetCodeTree
 
     GetDisplayTree = function()
     {
         CondCacheDisplayTree()
         # browser() # Breakpoints seem a little flaky in Shiny.
-        return(CachedDisplayTree)
+        CachedDisplayTree
     } # GetDisplayTree
 
     CondCacheCodeTree = function() # And also AugmentedCodeData
@@ -100,7 +103,7 @@ MakeCodeTree = function(CodeData) # data.table version of an appropriate BLS cod
         #  $ parent_rn    : num  0 1 2 3 4 5 5 5 5 5 ...
         #  - attr(*, ".internal.selfref")=<externalptr>
         #  - attr(*, "sorted")= chr "sort_sequence"
-        return(acd)
+        acd
     } # ComputeParentRNs
 
     PopulateSubTree = function(RowNum) # And all children, recursively. Phase 2
@@ -115,7 +118,7 @@ MakeCodeTree = function(CodeData) # data.table version of an appropriate BLS cod
             cl = length(ret[[2]])
             rl = length(ret)
         }
-        return(ret)
+        ret
     } # PopulateSubTree
 
     CondCacheDisplayTree = function()
@@ -130,22 +133,28 @@ MakeCodeTree = function(CodeData) # data.table version of an appropriate BLS cod
                     '4' = list(leafA = '', leafB = '')
                 )
             )
-            CachedDisplayTree <<- PopulateSubDisplayTree(1) # Real code
-            names(CachedDisplayTree) <<- 'All' # This is where ShinyTree wants the text
+            DefinedTopLevelRN = 1
+            CachedDisplayTree <<- PopulateSubDisplayTree(DefinedTopLevelRN) # Real code
+            # browser()
+            CachedDisplayTree <<- list('All'=CachedDisplayTree)
+            names(CachedDisplayTree) <<- AugmentedCodeData[DefinedTopLevelRN,DisplayTextColumn,with=F]
         }
     } # CondCacheDisplayTree
 
     PopulateSubDisplayTree = function(RowNum) # And all children, recursively. Phase 3
     {
+        ret = list('') # Any non list element signals to ShinyTree this a leaf.
         CurrentCodeDef = AugmentedCodeData[RowNum,]
-        ret = list('')
+        CurrentDisplayText = CurrentCodeDef[1,DisplayTextColumn,with=F]
+        # browser()
+        names(ret) = CurrentDisplayText
         ChildrenRNs = which(AugmentedCodeData$parent_rn == RowNum)
         FirstTime = T
         for(ThisChildRN in ChildrenRNs)
         {
             ThisChildSubTree = PopulateSubDisplayTree(ThisChildRN)
             ThisChildCodeDef = AugmentedCodeData[ThisChildRN,]
-            ThisChildDisplayText = ThisChildCodeDef$industry_text
+            ThisChildDisplayText = ThisChildCodeDef[1,DisplayTextColumn,with=F]
             if (FirstTime)
             {
                 FirstTime = F
@@ -160,8 +169,9 @@ MakeCodeTree = function(CodeData) # data.table version of an appropriate BLS cod
             # browser()
             rl = length(ret)
         }
-        return(ret)
+        ret
     } # PopulateSubDisplayTree
+
     # These are the only public methods for a CodeTree
 
     list(GetAugmentedCodeData = GetAugmentedCodeData, # This method is intended for troubleshooting or EDA

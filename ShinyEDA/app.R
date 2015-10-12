@@ -273,7 +273,8 @@ server = function(input, output)
     })
 
     output$tree <- renderTree({
-        DisplayTree = FNsT[[1]]$GetDisplayTree()
+        datasetname = input$datasetT
+        DisplayTree = FNsT[[datasetname]]$GetDisplayTree()
         # browser() # Breakpoints seem flaky in Shiny
         DisplayTree
     })
