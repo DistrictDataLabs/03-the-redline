@@ -4,8 +4,12 @@
 library(utils)
 library(data.table)
 library(rvest) # XML/HTML handling
-library(rdrop2)
+library(rdrop2) # Dropbox wrapper
 library(shiny)
+
+library('shinyTree')
+
+source('MakeCodeTree.R')
 
 # Globals are first computed or just plain set to parameterize behavior.
 
@@ -53,7 +57,7 @@ if (!file.exists('.httr-oauth') & file.exists('httr-oauth')) {file.rename('httr-
 
 BLSDataURL ='http://download.bls.gov/pub/time.series/cs'
 
-FileListRaw = html(BLSDataURL)
+FileListRaw = read_html(BLSDataURL)
 FileList = (FileListRaw %>% html_nodes('a') %>% html_text())
 
 FNsB = c()
@@ -77,6 +81,16 @@ if (ListRLFilesFromDropBox)
     FNsR = dir(CompressedRDataDir,'^rl[.].*rda')
     FNsR = sub('[.]rda','',FNsR) # Remove .rda to make the name look better in the GUI.
 }
+
+FNsT = list(
+        rl.event='',
+#         rl.category='', # Doesn't work yet; don't know why
+        rl.industry='',
+        rl.nature='',
+#        rl.occupation='', # Doesn't work yet; 17 'roots' but so far only 1 is supported
+        rl.pob='',
+        rl.source=''
+            )
 
 LoadDataFile = function(FileName) # First downloads the file unless it is already local
 {
@@ -194,6 +208,27 @@ ui = fluidPage(
                     tableOutput('viewR')
                 )
             )
+        ),
+        tabPanel
+        (
+            'Sample Tree Control for BLS Industry Hierarchy',
+            sidebarLayout
+            (
+                sidebarPanel
+                (
+                    selectInput('datasetT', 'Choose a data.table:',
+                                choices = names(FNsT))
+                ),
+                mainPanel
+                (
+                    h3('Data Structure'),
+                    verbatimTextOutput('strT'),
+                    h3('Currently Selected:'),
+                    verbatimTextOutput('selTxtT'),
+                    hr(),
+                    shinyTree('treeT')
+                )
+            )
         )
     ) # tabsetPanel
 ) # ui
@@ -235,6 +270,58 @@ server = function(input, output)
         summary(dataset)
     })
     output$viewR = renderTable({head(datasetInputR(), n = input$obsR)},include.rownames=F)
+    # Code Hierarchy
+    datasetInputT = reactive({
+        CondLoadDataTable(input$datasetT)
+    })
+    output$strT = renderPrint({
+        dataset = datasetInputT()
+        str(dataset)
+    })
+
+    output$treeT <- renderTree({
+        datasetname = input$datasetT
+        ct = FNsT[[datasetname]]
+        if (!is.list(ct))
+        {
+            ct = MakeCodeTree(get(datasetname))
+            FNsT[[datasetname]] = ct
+        }
+        DisplayTree = ct$GetDisplayTree()
+        # browser() # Breakpoints seem flaky in Shiny
+        DisplayTree
+    })
+    output$selTxtT <- renderText({
+        datasetname = input$datasetT # Reactive dependency -- doesn't work.
+        tree = input$treeT
+        if (is.null(tree))
+        {
+            'None'
+        } else
+        {
+            sel = get_selected(tree)
+            ss = unlist(sel)
+#            browser() # sel is a list of 1, the name of selected node, with the path to the root available as the ancestry attribute.
+            if (is.null(ss))
+            {
+                selTxtT = 'Nothing selected.'
+            }
+            else if(T)
+            {
+                selTxtT = ss
+            } # Below here is WIP
+            else if(is.na(as.integer(ss)))
+            {
+                selTxtT = paste0('Cannot find sort_sequence ',ss)
+            }
+            else
+            {
+                adt = FNsT[[1]]$GetAugmentedCodeData()
+                selTxtT = adt[as.integer(ss)]$industry_text
+            }
+            selTxtT
+        }
+    })
 } # server
 
 shinyApp(ui, server)
