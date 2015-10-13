@@ -135,9 +135,6 @@ MakeCodeTree = function(CodeData) # data.table version of an appropriate BLS cod
             )
             DefinedTopLevelRN = 1
             CachedDisplayTree <<- PopulateSubDisplayTree(DefinedTopLevelRN) # Real code
-            # browser()
-            # CachedDisplayTree <<- list(CachedDisplayTree)
-            # names(CachedDisplayTree) <<- AugmentedCodeData[DefinedTopLevelRN,DisplayTextColumn,with=F]
         }
     } # CondCacheDisplayTree
 
@@ -159,7 +156,6 @@ MakeCodeTree = function(CodeData) # data.table version of an appropriate BLS cod
             if (FirstTime)
             {
                 FirstTime = F
-                # browser()
                 ret[[1]] = ThisChildSubTree # Replacing '' as the first element
                 # names(ret[[1]]) = ThisChildDisplayText
             }
@@ -168,11 +164,6 @@ MakeCodeTree = function(CodeData) # data.table version of an appropriate BLS cod
                 ret[[1]] = list.append(ret[[1]],ThisChildSubTree[[1]])
                 names(ret[[1]])[length(names(ret[[1]]))] = ThisChildDisplayText
             }
-        }
-        rl = length(ret)
-        if (rl == 1)
-        {
-            # browser()
         }
         names(ret) = CurrentDisplayText
         ret
