@@ -82,7 +82,15 @@ if (ListRLFilesFromDropBox)
     FNsR = sub('[.]rda','',FNsR) # Remove .rda to make the name look better in the GUI.
 }
 
-FNsT = list(rl.industry=MakeCodeTree(rl.industry),rl.source=MakeCodeTree(rl.source))
+FNsT = list(
+        rl.event='',
+#         rl.category='', # Doesn't work yet; don't know why
+        rl.industry='',
+        rl.nature='',
+#        rl.occupation='', # Doesn't work yet; 17 'roots' but so far only 1 is supported
+        rl.pob='',
+        rl.source=''
+            )
 
 LoadDataFile = function(FileName) # First downloads the file unless it is already local
 {
@@ -208,18 +216,17 @@ ui = fluidPage(
             (
                 sidebarPanel
                 (
-                    selectInput('datasetT', 'Choose a datafile:',
-                                choices = names(FNsT)),
-                    numericInput('obsT','Number of observations to view:',10,min=1)
+                    selectInput('datasetT', 'Choose a data.table:',
+                                choices = names(FNsT))
                 ),
                 mainPanel
                 (
                     h3('Data Structure'),
                     verbatimTextOutput('strT'),
                     h3('Currently Selected:'),
-                    verbatimTextOutput("selTxt"),
+                    verbatimTextOutput('selTxtT'),
                     hr(),
-                    shinyTree('tree')
+                    shinyTree('treeT')
                 )
             )
         )
@@ -272,14 +279,21 @@ server = function(input, output)
         str(dataset)
     })
 
-    output$tree <- renderTree({
+    output$treeT <- renderTree({
         datasetname = input$datasetT
-        DisplayTree = FNsT[[datasetname]]$GetDisplayTree()
+        ct = FNsT[[datasetname]]
+        if (!is.list(ct))
+        {
+            ct = MakeCodeTree(get(datasetname))
+            FNsT[[datasetname]] = ct
+        }
+        DisplayTree = ct$GetDisplayTree()
         # browser() # Breakpoints seem flaky in Shiny
         DisplayTree
     })
-    output$selTxt <- renderText({
-        tree <- input$tree
+    output$selTxtT <- renderText({
+        datasetname = input$datasetT # Reactive dependency -- doesn't work.
+        tree = input$treeT
         if (is.null(tree))
         {
             'None'
@@ -290,22 +304,22 @@ server = function(input, output)
 #            browser() # sel is a list of 1, the name of selected node, with the path to the root available as the ancestry attribute.
             if (is.null(ss))
             {
-                selTxt = 'Nothing selected.'
+                selTxtT = 'Nothing selected.'
             }
             else if(T)
             {
-                selTxt = ss
+                selTxtT = ss
             } # Below here is WIP
             else if(is.na(as.integer(ss)))
             {
-                selTxt = paste0('Cannot find sort_sequence ',ss)
+                selTxtT = paste0('Cannot find sort_sequence ',ss)
             }
             else
             {
                 adt = FNsT[[1]]$GetAugmentedCodeData()
-                selTxt = adt[as.integer(ss)]$industry_text
+                selTxtT = adt[as.integer(ss)]$industry_text
             }
-            selTxt
+            selTxtT
         }
     })
 } # server

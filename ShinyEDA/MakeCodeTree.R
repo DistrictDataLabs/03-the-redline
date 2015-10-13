@@ -129,15 +129,15 @@ MakeCodeTree = function(CodeData) # data.table version of an appropriate BLS cod
             CachedDisplayTree <<- list( # Junk development code
                 '1' = '',
                 '2' = list(
-                    '3' = list(leaf1 = '', leaf2 = NULL, leaf3=''),
+                    '3' = list(leaf1 = '', leaf2 = '', leaf3=''),
                     '4' = list(leafA = '', leafB = '')
                 )
             )
             DefinedTopLevelRN = 1
             CachedDisplayTree <<- PopulateSubDisplayTree(DefinedTopLevelRN) # Real code
             # browser()
-            CachedDisplayTree <<- list('All'=CachedDisplayTree)
-            names(CachedDisplayTree) <<- AugmentedCodeData[DefinedTopLevelRN,DisplayTextColumn,with=F]
+            # CachedDisplayTree <<- list(CachedDisplayTree)
+            # names(CachedDisplayTree) <<- AugmentedCodeData[DefinedTopLevelRN,DisplayTextColumn,with=F]
         }
     } # CondCacheDisplayTree
 
@@ -146,8 +146,8 @@ MakeCodeTree = function(CodeData) # data.table version of an appropriate BLS cod
         ret = list('') # Any non list element signals to ShinyTree this a leaf.
         CurrentCodeDef = AugmentedCodeData[RowNum,]
         CurrentDisplayText = CurrentCodeDef[1,DisplayTextColumn,with=F]
+        CurrentDisplayText = as.character(CurrentDisplayText)
         # browser()
-        names(ret) = CurrentDisplayText
         ChildrenRNs = which(AugmentedCodeData$parent_rn == RowNum)
         FirstTime = T
         for(ThisChildRN in ChildrenRNs)
@@ -155,20 +155,26 @@ MakeCodeTree = function(CodeData) # data.table version of an appropriate BLS cod
             ThisChildSubTree = PopulateSubDisplayTree(ThisChildRN)
             ThisChildCodeDef = AugmentedCodeData[ThisChildRN,]
             ThisChildDisplayText = ThisChildCodeDef[1,DisplayTextColumn,with=F]
+            ThisChildDisplayText = as.character(ThisChildDisplayText)
             if (FirstTime)
             {
                 FirstTime = F
+                # browser()
                 ret[[1]] = ThisChildSubTree # Replacing '' as the first element
-                names(ret)[1] = ThisChildDisplayText
+                # names(ret[[1]]) = ThisChildDisplayText
             }
             else
             {
-                ret = list.append(ret,ThisChildSubTree)
-                names(ret)[length(names(ret))] = ThisChildDisplayText
+                ret[[1]] = list.append(ret[[1]],ThisChildSubTree[[1]])
+                names(ret[[1]])[length(names(ret[[1]]))] = ThisChildDisplayText
             }
-            # browser()
-            rl = length(ret)
         }
+        rl = length(ret)
+        if (rl == 1)
+        {
+            # browser()
+        }
+        names(ret) = CurrentDisplayText
         ret
     } # PopulateSubDisplayTree
 
