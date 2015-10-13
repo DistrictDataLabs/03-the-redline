@@ -211,7 +211,7 @@ ui = fluidPage(
         ),
         tabPanel
         (
-            'Sample Tree Control for BLS Industry Hierarchy',
+            'Sample Tree Control for a BLS Code Table Hierarchy',
             sidebarLayout
             (
                 sidebarPanel
