@@ -368,7 +368,7 @@ server = function(input, output)
         ct = FNsS[[datasetname]]
         if (!is.list(ct))
         {
-            ct = MakeCodeTree(get(datasetname),4) # display_level >= 4 will be ignored
+            ct = MakeCodeTree(get(datasetname),999) # display_level >= 4 will be ignored
             FNsS[[datasetname]] = ct
         }
         DisplayTree = ct$GetDisplayTree()

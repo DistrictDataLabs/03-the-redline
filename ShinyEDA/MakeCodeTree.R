@@ -91,9 +91,10 @@ MakeCodeTree = function(CodeData,MaxDepth=999999) # data.table version of an app
             } else # Jumping back up to a different branch
             {
                 CondSiblingRowNum = RowNum-1
+                # browser()
                 while(dl < CurrentDisplayLevel)
                 {
-                    CondSiblingRowNum = acd[CondSiblingRowNum,]$parent_rn
+                    CondSiblingRowNum = min(acd[CondSiblingRowNum,]$parent_rn)
                     CurrentDisplayLevel = acd[CondSiblingRowNum,]$display_level
                 }
                 acd[RowNum,]$parent_rn = acd[CondSiblingRowNum,]$parent_rn
