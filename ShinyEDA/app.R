@@ -31,7 +31,8 @@ if (hostname == 'VM-EP-3')
     DDLRoot = 'd:/RProjects' # Oops
     DataDir = paste0(DDLRoot,'/RedLineData')
 }
-if (hostname == 'VM-EP-3' | hostname == 'AJ')
+ForceListRLFilesFromDropBox = F # T to locally test DropBox connectivity
+if (!ForceListRLFilesFromDropBox & (hostname == 'VM-EP-3' | hostname == 'AJ'))
 {
     ListRLFilesFromDropBox = FALSE # Local only
     QuietDownload = FALSE
@@ -73,7 +74,7 @@ for(FileName in FileList[2:length(FileList)]) # [1] is [To Parent Directory]
 if (ListRLFilesFromDropBox)
 {
     # List the directory, stipping off the pathname from each filename
-    FNsR = sub(paste0(DropBoxCompressedRDataDir,'/'),'',drop_dir(DropBoxCompressedRDataDir)$path)
+    FNsR = sub(paste0(DropBoxCompressedRDataDir,'/'),'',drop_dir(DropBoxCompressedRDataDir,n=0)$path)
     FNsR = grep('^rl[.].*rda',FNsR,value=T,ignore.case=T) # Filter, keeping just the rl datafiles
     FNsR = sub('[.]rda','',FNsR) # Remove .rda to make the name look better in the GUI.
 } else
