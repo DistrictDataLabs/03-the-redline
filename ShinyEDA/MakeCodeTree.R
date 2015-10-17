@@ -79,22 +79,22 @@ MakeCodeTree = function(CodeData,MaxDepth=999999) # data.table version of an app
                 acd[RowNum,]$parent_rn = acd[RowNum-1,]$parent_rn
             } else if (dl > CurrentDisplayLevel) # Moving down the tree, so this node is a child
             {
-                if (dl >= MyMaxDepth) # Then clip the tree by setting parent to -1
+                if (dl >= MyMaxDepth) # Then clip the tree by setting parent to negative of real value
                 {
-                    acd[RowNum,]$parent_rn = -1
+                    acd[RowNum,]$parent_rn = -(RowNum-1)
                 }
                 else
                 {
                     acd[RowNum,]$parent_rn = RowNum-1
-                    CurrentDisplayLevel = dl
                 }
+                CurrentDisplayLevel = dl
             } else # Jumping back up to a different branch
             {
                 CondSiblingRowNum = RowNum-1
                 # browser()
                 while(dl < CurrentDisplayLevel)
                 {
-                    CondSiblingRowNum = min(acd[CondSiblingRowNum,]$parent_rn)
+                    CondSiblingRowNum = abs(acd[CondSiblingRowNum,]$parent_rn)
                     CurrentDisplayLevel = acd[CondSiblingRowNum,]$display_level
                 }
                 acd[RowNum,]$parent_rn = acd[CondSiblingRowNum,]$parent_rn
