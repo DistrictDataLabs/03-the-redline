@@ -7,7 +7,7 @@ library(rvest) # XML/HTML handling
 library(rdrop2) # Dropbox wrapper
 library(shiny)
 
-library('shinyTree')
+library(shinyTree)
 
 source('MakeCodeTree.R')
 

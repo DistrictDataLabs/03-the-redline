@@ -189,5 +189,5 @@ MakeCodeTree = function(CodeData,MaxDepth=999999) # data.table version of an app
 
 # ct = MakeCodeTree(rl.industry)
 # tct = ct$GetCodeTree()
- ct3 = MakeCodeTree(rl.industry,3)
- tct3 = ct3$GetCodeTree()
+# ct3 = MakeCodeTree(rl.industry,3)
+# tct3 = ct3$GetCodeTree()
