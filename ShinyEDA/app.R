@@ -92,6 +92,16 @@ FNsT = list(
         rl.source=''
             )
 
+FNsS = list(
+#        rl.event='', # Want industry to be the default so show selected works
+#         rl.category='', # Doesn't work yet; don't know why
+        rl.industry='',
+        rl.nature='',
+#        rl.occupation='', # Doesn't work yet; 17 'roots' but so far only 1 is supported
+        rl.pob='',
+        rl.source=''
+            )
+
 LoadDataFile = function(FileName) # First downloads the file unless it is already local
 {
     Note=''
@@ -229,6 +239,27 @@ ui = fluidPage(
                     shinyTree('treeT')
                 )
             )
+        ),
+        tabPanel
+        (
+            'Sample Tree Control for Truncated BLS Code Trees',
+            sidebarLayout
+            (
+                sidebarPanel
+                (
+                    selectInput('datasetS', 'Choose a data.table:',
+                                choices = names(FNsS))
+                ),
+                mainPanel
+                (
+                    h3('Data Structure'),
+                    verbatimTextOutput('strS'),
+                    h3('Currently Selected:'),
+                    verbatimTextOutput('selTxtS'),
+                    hr(),
+                    shinyTree('treeS')
+                )
+            )
         )
     ) # tabsetPanel
 ) # ui
@@ -270,7 +301,7 @@ server = function(input, output)
         summary(dataset)
     })
     output$viewR = renderTable({head(datasetInputR(), n = input$obsR)},include.rownames=F)
-    # Code Hierarchy
+    # Code Tree Hierarchy
     datasetInputT = reactive({
         CondLoadDataTable(input$datasetT)
     })
@@ -322,6 +353,60 @@ server = function(input, output)
             selTxtT
         }
     })
+
+    # Truncated Code Tree Hierarchy
+    datasetInputS = reactive({
+        CondLoadDataTable(input$datasetS)
+    })
+    output$strS = renderPrint({
+        dataset = datasetInputS()
+        str(dataset)
+    })
+
+    output$treeS <- renderTree({
+        datasetname = input$datasetS
+        ct = FNsS[[datasetname]]
+        if (!is.list(ct))
+        {
+            ct = MakeCodeTree(get(datasetname),4) # display_level >= 4 will be ignored
+            FNsS[[datasetname]] = ct
+        }
+        DisplayTree = ct$GetDisplayTree()
+        # browser() # Breakpoints seem flaky in Shiny
+        DisplayTree
+    })
+    output$selTxtS <- renderText({
+        datasetname = input$datasetS # Reactive dependency -- doesn't work.
+        tree = input$treeS
+        if (is.null(tree))
+        {
+            'None'
+        } else
+        {
+            sel = get_selected(tree)
+            ss = unlist(sel)
+#            browser() # sel is a list of 1, the name of selected node, with the path to the root available as the ancestry attribute.
+            if (is.null(ss))
+            {
+                selTxtS = 'Nothing selected.'
+            }
+            else if(T)
+            {
+                selTxtS = ss
+            } # Below here is WIP
+            else if(is.na(as.integer(ss)))
+            {
+                selTxtS = paste0('Cannot find sort_sequence ',ss)
+            }
+            else
+            {
+                adt = FNsS[[1]]$GetAugmentedCodeData()
+                selTxtS = adt[as.integer(ss)]$industry_text
+            }
+            selTxtS
+        }
+    })
+
 } # server
 
 shinyApp(ui, server)

@@ -12,8 +12,10 @@ library(rlist)
 # Note: there was some development complexity due to data.table's non standard
 # lazy copy functionality.
 
-MakeCodeTree = function(CodeData) # data.table version of an appropriate BLS code table.
+MakeCodeTree = function(CodeData,MaxDepth=999999) # data.table version of an appropriate BLS code table.
 {
+    # For performance, limit the maximum depth of the tree data and thereby the control
+    MyMaxDepth = MaxDepth
     # This will be sorted by sort_sequence then 2 variables will be added, rn and parent_rn.
     AugmentedCodeData = CodeData
     # This will be a list with 2 named elements. "me" will contain the first record of the
@@ -74,11 +76,18 @@ MakeCodeTree = function(CodeData) # data.table version of an appropriate BLS cod
             dl = acd[RowNum,]$display_level
             if (dl == CurrentDisplayLevel)
             {
-                acd[RowNum]$parent_rn = acd[RowNum-1]$parent_rn
+                acd[RowNum,]$parent_rn = acd[RowNum-1,]$parent_rn
             } else if (dl > CurrentDisplayLevel) # Moving down the tree, so this node is a child
             {
-                acd[RowNum]$parent_rn = RowNum-1
-                CurrentDisplayLevel = dl
+                if (dl >= MyMaxDepth) # Then clip the tree by setting parent to -1
+                {
+                    acd[RowNum,]$parent_rn = -1
+                }
+                else
+                {
+                    acd[RowNum,]$parent_rn = RowNum-1
+                    CurrentDisplayLevel = dl
+                }
             } else # Jumping back up to a different branch
             {
                 CondSiblingRowNum = RowNum-1
@@ -87,7 +96,7 @@ MakeCodeTree = function(CodeData) # data.table version of an appropriate BLS cod
                     CondSiblingRowNum = acd[CondSiblingRowNum,]$parent_rn
                     CurrentDisplayLevel = acd[CondSiblingRowNum,]$display_level
                 }
-                acd[RowNum]$parent_rn = acd[CondSiblingRowNum]$parent_rn
+                acd[RowNum,]$parent_rn = acd[CondSiblingRowNum,]$parent_rn
             }
         } # Parent row number loop
 
@@ -179,3 +188,5 @@ MakeCodeTree = function(CodeData) # data.table version of an appropriate BLS cod
 
 # ct = MakeCodeTree(rl.industry)
 # tct = ct$GetCodeTree()
+ ct3 = MakeCodeTree(rl.industry,3)
+ tct3 = ct3$GetCodeTree()
