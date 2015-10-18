@@ -8,6 +8,7 @@
 # BLSDataURL
 # QuietDownload
 # OrigDataDir
+# MaxRowsToRead
 
 LoadDataFile = function(FileName) # First downloads the file unless it is already local
 {

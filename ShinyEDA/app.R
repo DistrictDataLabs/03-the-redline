@@ -20,12 +20,12 @@ hostname = system('hostname', intern=T)
 
 if (hostname == 'AJ')
 {
-    MaxRowsToRead = 10000 # data max is less than 50M
+    MaxRowsToRead <<- 10000 # data max is less than 50M
     DDLRoot = 'E:/wat/misc/DDL'
     DataDir = paste0(DDLRoot,'/Data')
 } else
 {
-    MaxRowsToRead = 100000000 # data max is less than 50M so this gets all
+    MaxRowsToRead <<- 100000000 # data max is less than 50M so this gets all
 }
 if (hostname == 'VM-EP-3')
 {
@@ -36,28 +36,28 @@ ForceListRLFilesFromDropBox = F # T to locally test DropBox connectivity
 if (!ForceListRLFilesFromDropBox & (hostname == 'VM-EP-3' | hostname == 'AJ'))
 {
     ListRLFilesFromDropBox = FALSE # Local only
-    QuietDownload = FALSE
+    QuietDownload <<- FALSE
 } else
 {
     DataDir = 'Data'
     ListRLFilesFromDropBox = TRUE # Any local cache is still used for the actual data
-    QuietDownload = TRUE
+    QuietDownload <<- TRUE
 }
-OrigDataDir = paste0(DataDir,'/BLSOrig')
-CompressedRDataDir = paste0(DataDir,'/CompressedRDA')
+OrigDataDir <<- paste0(DataDir,'/BLSOrig')
+CompressedRDataDir <<- paste0(DataDir,'/CompressedRDA')
 dir.create(OrigDataDir,recursive=T,showWarnings=F)
 dir.create(CompressedRDataDir,recursive=T,showWarnings=F)
 
 # If we don't have the data locally, check DropBox using these globals.
 
 DropBoxDataDir = '/Data'
-DropBoxCompressedRDataDir = paste0(DropBoxDataDir,'/CompressedRDA')
+DropBoxCompressedRDataDir <<- paste0(DropBoxDataDir,'/CompressedRDA')
 # This works around an apparent limitation of publishing to shinyapps.io:
 if (!file.exists('.httr-oauth') & file.exists('httr-oauth')) {file.rename('httr-oauth','.httr-oauth')}
 
 # Cache the filelist from BLS into FNsB
 
-BLSDataURL ='http://download.bls.gov/pub/time.series/cs'
+BLSDataURL <<- 'http://download.bls.gov/pub/time.series/cs'
 
 FileListRaw = read_html(BLSDataURL)
 FileList = (FileListRaw %>% html_nodes('a') %>% html_text())
