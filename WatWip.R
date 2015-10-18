@@ -403,3 +403,29 @@ MakeCodeTree = function(CodeData) # data.table version of an appropriate BLS cod
 ct = MakeCodeTree(rl.industry)
 tct = ct$GetCodeTree()
 
+CondLoadDataTable('rl.series.series_id')
+CondLoadDataTable('rl.series.industry_code')
+CondLoadDataTable('rl.data.series_id')
+CondLoadDataTable('rl.data.year')
+rl.data.series_id$year = rl.data.year
+rm(rl.data.year)
+setkey(rl.data.series_id,series_id)
+rl.series.series_id$industry_code = rl.series.industry_code
+rm(rl.series.industry_code)
+setkey(rl.series.series_id,series_id)
+rl.data.series_id = rl.data.series_id[rl.series.series_id]
+rm(rl.series.series_id)
+SeriesYearIndustryCounts = rl.data.series_id[,.N,by='year,industry_code']
+SeriesYearIndustryCounts = SeriesYearIndustryCounts[industry_code != '']
+SaveFilePath = paste(CompressedRDataDir,'SeriesYearIndustryCounts',sep='/')
+SaveFilePath = paste0(SaveFilePath,'.rda')
+save(SeriesYearIndustryCounts,file=SaveFilePath)
+
+plot(N~.,data=SeriesYearIndustryCounts) # Yuck
+
+junkFit = lm(N~.,data=SeriesYearIndustryCounts)
+summary(junkFit)
+
+CondLoadDataTable('SeriesYearIndustryCounts')
+SeriesYearIndustryCounts[4]$industry_code == ''
+SeriesYearIndustryCounts[industry_code != '']
