@@ -12,8 +12,10 @@ library(rlist)
 # Note: there was some development complexity due to data.table's non standard
 # lazy copy functionality.
 
-MakeCodeTree = function(CodeData) # data.table version of an appropriate BLS code table.
+MakeCodeTree = function(CodeData,MaxDepth=999999) # data.table version of an appropriate BLS code table.
 {
+    # For performance, limit the maximum depth of the tree data and thereby the control
+    MyMaxDepth = MaxDepth
     # This will be sorted by sort_sequence then 2 variables will be added, rn and parent_rn.
     AugmentedCodeData = CodeData
     # This will be a list with 2 named elements. "me" will contain the first record of the
@@ -74,20 +76,28 @@ MakeCodeTree = function(CodeData) # data.table version of an appropriate BLS cod
             dl = acd[RowNum,]$display_level
             if (dl == CurrentDisplayLevel)
             {
-                acd[RowNum]$parent_rn = acd[RowNum-1]$parent_rn
+                acd[RowNum,]$parent_rn = acd[RowNum-1,]$parent_rn
             } else if (dl > CurrentDisplayLevel) # Moving down the tree, so this node is a child
             {
-                acd[RowNum]$parent_rn = RowNum-1
+                if (dl >= MyMaxDepth) # Then clip the tree by setting parent to negative of real value
+                {
+                    acd[RowNum,]$parent_rn = -(RowNum-1)
+                }
+                else
+                {
+                    acd[RowNum,]$parent_rn = RowNum-1
+                }
                 CurrentDisplayLevel = dl
             } else # Jumping back up to a different branch
             {
                 CondSiblingRowNum = RowNum-1
+                # browser()
                 while(dl < CurrentDisplayLevel)
                 {
-                    CondSiblingRowNum = acd[CondSiblingRowNum,]$parent_rn
+                    CondSiblingRowNum = abs(acd[CondSiblingRowNum,]$parent_rn)
                     CurrentDisplayLevel = acd[CondSiblingRowNum,]$display_level
                 }
-                acd[RowNum]$parent_rn = acd[CondSiblingRowNum]$parent_rn
+                acd[RowNum,]$parent_rn = acd[CondSiblingRowNum,]$parent_rn
             }
         } # Parent row number loop
 
@@ -169,13 +179,41 @@ MakeCodeTree = function(CodeData) # data.table version of an appropriate BLS cod
         ret
     } # PopulateSubDisplayTree
 
+    GetSelectedCodeDef = function(ShinyTreeSelected) # See app.R for an example of ShinyTreeSelected
+    {
+        RowNum = 0
+        ret = NULL
+        if (length(ShinyTreeSelected) > 0) # Remove the selection containing list
+        {
+            ShinyTreeSelected = ShinyTreeSelected[[1]]
+            while(is.list(ShinyTreeSelected)) # Walk down the tree
+            {
+                RootDisplayText = names(ShinyTreeSelected) # Matching display text
+                Children = AugmentedCodeData[parent_rn == RowNum] # among the children of RowNum
+                RowNum = Children[which(Children[,DisplayTextColumn,with=F]==RootDisplayText),]$rn
+                ret = AugmentedCodeData[RowNum,]
+                ShinyTreeSelected = ShinyTreeSelected[[1]]
+            }
+        }
+        if (is.null(ret))
+        {
+            # Default to the 'All' entry
+            CurrentCodeDef = AugmentedCodeData[1,]
+            ret = CurrentCodeDef
+        }
+        ret
+    } # GetSelectedCodeDef
+
     # These are the only public methods for a CodeTree
 
     list(GetAugmentedCodeData = GetAugmentedCodeData, # This method is intended for troubleshooting or EDA
          GetCodeTree = GetCodeTree, # This returns the code tree as a nested list, building it and caching it if needed
-         GetDisplayTree = GetDisplayTree # This returns the display text tree as a nested list, building it and caching it if needed.
+         GetDisplayTree = GetDisplayTree, # This returns the display text tree as a nested list, building it and caching it if needed.
+         GetSelectedCodeDef = GetSelectedCodeDef # This returns the selected record from the (augmented) BLS code table, e.g. rl.industry (augmented with rn and parent_rn)
     )
 } # MakeCodeTree
 
 # ct = MakeCodeTree(rl.industry)
 # tct = ct$GetCodeTree()
+# ct3 = MakeCodeTree(rl.industry,3)
+# tct3 = ct3$GetCodeTree()

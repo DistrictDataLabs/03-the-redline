@@ -7,9 +7,10 @@ library(rvest) # XML/HTML handling
 library(rdrop2) # Dropbox wrapper
 library(shiny)
 
-library('shinyTree')
+library(shinyTree)
 
 source('MakeCodeTree.R')
+source('CondLoadDataTable.R')
 
 # Globals are first computed or just plain set to parameterize behavior.
 
@@ -19,43 +20,44 @@ hostname = system('hostname', intern=T)
 
 if (hostname == 'AJ')
 {
-    MaxRowsToRead = 10000 # data max is less than 50M
+    MaxRowsToRead <<- 10000 # data max is less than 50M
     DDLRoot = 'E:/wat/misc/DDL'
     DataDir = paste0(DDLRoot,'/Data')
 } else
 {
-    MaxRowsToRead = 100000000 # data max is less than 50M so this gets all
+    MaxRowsToRead <<- 100000000 # data max is less than 50M so this gets all
 }
 if (hostname == 'VM-EP-3')
 {
     DDLRoot = 'd:/RProjects' # Oops
     DataDir = paste0(DDLRoot,'/RedLineData')
 }
-if (hostname == 'VM-EP-3' | hostname == 'AJ')
+ForceListRLFilesFromDropBox = F # T to locally test DropBox connectivity
+if (!ForceListRLFilesFromDropBox & (hostname == 'VM-EP-3' | hostname == 'AJ'))
 {
     ListRLFilesFromDropBox = FALSE # Local only
-    QuietDownload = FALSE
+    QuietDownload <<- FALSE
 } else
 {
     DataDir = 'Data'
     ListRLFilesFromDropBox = TRUE # Any local cache is still used for the actual data
-    QuietDownload = TRUE
+    QuietDownload <<- TRUE
 }
-OrigDataDir = paste0(DataDir,'/BLSOrig')
-CompressedRDataDir = paste0(DataDir,'/CompressedRDA')
+OrigDataDir <<- paste0(DataDir,'/BLSOrig')
+CompressedRDataDir <<- paste0(DataDir,'/CompressedRDA')
 dir.create(OrigDataDir,recursive=T,showWarnings=F)
 dir.create(CompressedRDataDir,recursive=T,showWarnings=F)
 
 # If we don't have the data locally, check DropBox using these globals.
 
 DropBoxDataDir = '/Data'
-DropBoxCompressedRDataDir = paste0(DropBoxDataDir,'/CompressedRDA')
+DropBoxCompressedRDataDir <<- paste0(DropBoxDataDir,'/CompressedRDA')
 # This works around an apparent limitation of publishing to shinyapps.io:
 if (!file.exists('.httr-oauth') & file.exists('httr-oauth')) {file.rename('httr-oauth','.httr-oauth')}
 
 # Cache the filelist from BLS into FNsB
 
-BLSDataURL ='http://download.bls.gov/pub/time.series/cs'
+BLSDataURL <<- 'http://download.bls.gov/pub/time.series/cs'
 
 FileListRaw = read_html(BLSDataURL)
 FileList = (FileListRaw %>% html_nodes('a') %>% html_text())
@@ -73,7 +75,7 @@ for(FileName in FileList[2:length(FileList)]) # [1] is [To Parent Directory]
 if (ListRLFilesFromDropBox)
 {
     # List the directory, stipping off the pathname from each filename
-    FNsR = sub(paste0(DropBoxCompressedRDataDir,'/'),'',drop_dir(DropBoxCompressedRDataDir)$path)
+    FNsR = sub(paste0(DropBoxCompressedRDataDir,'/'),'',drop_dir(DropBoxCompressedRDataDir,n=0)$path)
     FNsR = grep('^rl[.].*rda',FNsR,value=T,ignore.case=T) # Filter, keeping just the rl datafiles
     FNsR = sub('[.]rda','',FNsR) # Remove .rda to make the name look better in the GUI.
 } else
@@ -83,83 +85,24 @@ if (ListRLFilesFromDropBox)
 }
 
 FNsT = list(
-        rl.event='',
 #         rl.category='', # Doesn't work yet; don't know why
         rl.industry='',
+        rl.event='', # Want industry to be the default so show selected works
         rl.nature='',
 #        rl.occupation='', # Doesn't work yet; 17 'roots' but so far only 1 is supported
         rl.pob='',
         rl.source=''
             )
 
-LoadDataFile = function(FileName) # First downloads the file unless it is already local
-{
-    Note=''
-    StartTime = proc.time()
-    CompressedRDataPath = paste0(CompressedRDataDir,'/',FileName,'.rda')
-    DropBoxCompressedRDataPath = paste0(DropBoxCompressedRDataDir,'/',FileName,'.rda')
-    if (!file.exists(CompressedRDataPath) & drop_exists(DropBoxCompressedRDataPath))
-    {
-        # This is the case where we don't have the file locally as required by load()
-        # but it is on DropBox. Download the file so we can use it locally.
-        drop_get(DropBoxCompressedRDataPath, CompressedRDataPath)
-        Note=paste0(Note,'Dowloaded RDA from DropBox. ')
-    }
-    if (file.exists(CompressedRDataPath))
-    {
-        load(CompressedRDataPath,.GlobalEnv) # Load it in the global environment. The RDA file was created to contain 1 data.table with the name indicated by FileName.
-        Note = paste0(Note,'Loaded compressed data.table ',FileName,'.')
-    }
-    else
-    {
-        FilePath = paste(OrigDataDir, FileName, sep='/')
-        # The file must be local for file.size. Plus, we use both read.table and fread so may
-        # as well download it.
-        if (file.exists(FilePath))
-        {
-            Note = paste0(FileName, ' already local.')
-        }
-        else
-        {
-            Note = paste0(FileName, ' downloaded from BLS.')
-            FileURL = paste(BLSDataURL, FileName, sep='/')
-            download.file(FileURL, FilePath, mode='wb',quiet=QuietDownload)
-        }
-        # fread ignores the first line of these codetables because that
-        # header doesn't have the trailing tab (blank column) of the data rows.
-        # So read.table is used to get the variable names.
-        # But read.table is slow and also won't handle the Windows format text lines
-        # on the Linux Shiny server at shinyapps.io,
-        # so fread is used to actually load the data. Then then variable names are fixed up.
-        namesDF = read.table(FilePath,header=F,nrows=1,sep='\t',row.names=NULL,stringsAsFactors=F)
-        if (file.size(FilePath) > 999999)
-        {
-            drop = NULL
-        }
-        else
-        {
-            drop = ncol(namesDF) + 1
-        }
-        assign(FileName,fread(FilePath,nrows=MaxRowsToRead,header=F,drop=drop),envir=.GlobalEnv)
-        setnames(get(FileName), colnames(get(FileName)), as.matrix(namesDF)[1,])
-    }
-
-    LoadTime = proc.time()
-    LoadTime = LoadTime - StartTime
-    print(Note)
-    print('Data loaded in:')
-    print(LoadTime)
-    get(FileName)
-} # LoadDataFile
-
-# If a variable exists with the name in FileName, return it. Otherwise,
-# load it using LoadDataFile.
-
-CondLoadDataTable = function(FileName)
-{
-    mget(FileName,ifnotfound=list(LoadDataFile),inherits=T)[[1]]
-    # <sigh> get0 was running LoadDataFile even when FileName was found!
-} # CondLoadDataTable
+FNsS = list(
+#         rl.category='', # Doesn't work yet; don't know why
+        rl.industry4='',
+        rl.event4='', # Want industry to be the default so show selected works
+        rl.nature4='',
+#        rl.occupation='', # Doesn't work yet; 17 'roots' but so far only 1 is supported
+        rl.pob4='',
+        rl.source4=''
+            )
 
 # Define UI for dataset viewer application.
 
@@ -229,6 +172,27 @@ ui = fluidPage(
                     shinyTree('treeT')
                 )
             )
+        ),
+        tabPanel
+        (
+            'Sample Tree Control for Depth Limited BLS Code Trees',
+            sidebarLayout
+            (
+                sidebarPanel
+                (
+                    selectInput('datasetS', 'Choose a data.table:',
+                                choices = names(FNsS))
+                ),
+                mainPanel
+                (
+                    h3('Data Structure'),
+                    verbatimTextOutput('strS'),
+                    h3('Currently Selected:'),
+                    verbatimTextOutput('selTxtS'),
+                    hr(),
+                    shinyTree('treeS')
+                )
+            )
         )
     ) # tabsetPanel
 ) # ui
@@ -270,7 +234,7 @@ server = function(input, output)
         summary(dataset)
     })
     output$viewR = renderTable({head(datasetInputR(), n = input$obsR)},include.rownames=F)
-    # Code Hierarchy
+    # Code Tree Hierarchy
     datasetInputT = reactive({
         CondLoadDataTable(input$datasetT)
     })
@@ -285,7 +249,7 @@ server = function(input, output)
         if (!is.list(ct))
         {
             ct = MakeCodeTree(get(datasetname))
-            FNsT[[datasetname]] = ct
+            FNsT[[datasetname]] <<- ct
         }
         DisplayTree = ct$GetDisplayTree()
         # browser() # Breakpoints seem flaky in Shiny
@@ -300,8 +264,10 @@ server = function(input, output)
         } else
         {
             sel = get_selected(tree)
+            # List of 1 # Names format: list of 1 where name is the selected and path in the attributes
+            #  $ : atomic [1:1] Public administration
+            #   ..- attr(*, "ancestry")= chr [1:2] "All workers" "Service-providing"
             ss = unlist(sel)
-#            browser() # sel is a list of 1, the name of selected node, with the path to the root available as the ancestry attribute.
             if (is.null(ss))
             {
                 selTxtT = 'Nothing selected.'
@@ -322,6 +288,56 @@ server = function(input, output)
             selTxtT
         }
     })
+
+    # Truncated Code Tree Hierarchy
+    datasetInputS = reactive({
+        CondLoadDataTable(input$datasetS)
+    })
+    output$strS = renderPrint({
+        dataset = datasetInputS()
+        str(dataset)
+    })
+
+    output$treeS <- renderTree({
+        datasetname = input$datasetS
+        ct = FNsS[[datasetname]]
+        if (!is.list(ct))
+        {
+            ct = MakeCodeTree(get(datasetname),4) # display_level >= 4 will be ignored
+            FNsS[[datasetname]] <<- ct
+        }
+        DisplayTree = ct$GetDisplayTree()
+        # browser() # Breakpoints seem flaky in Shiny
+        DisplayTree
+    })
+    output$selTxtS <- renderText({
+        datasetname = input$datasetS
+        tree = input$treeS
+        if (is.null(tree))
+        {
+            'None'
+        } else
+        {
+            sel = get_selected(tree,format='slices')
+            # List of 1 # Slices Format: all lists, no attributes.
+            #  $ :List of 1
+            #   ..$ All workers:List of 1
+            #   .. ..$ Service-providing:List of 1
+            #   .. .. ..$ Professional and business services: num 0
+            ct = FNsS[[datasetname]]
+            CodeDef = ct$GetSelectedCodeDef(sel)
+            if (is.null(CodeDef))
+            {
+                selTxtS = 'Nothing selected'
+            }
+            else
+            {
+                selTxtS = paste0(CodeDef$industry_code,':  ',CodeDef$industry_text)
+            }
+            selTxtS
+        }
+    })
+
 } # server
 
 shinyApp(ui, server)
