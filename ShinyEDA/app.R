@@ -96,12 +96,12 @@ FNsT = list(
 
 FNsS = list(
 #         rl.category='', # Doesn't work yet; don't know why
-        rl.industry='',
-        rl.event='', # Want industry to be the default so show selected works
-        rl.nature='',
+        rl.industry4='',
+        rl.event4='', # Want industry to be the default so show selected works
+        rl.nature4='',
 #        rl.occupation='', # Doesn't work yet; 17 'roots' but so far only 1 is supported
-        rl.pob='',
-        rl.source=''
+        rl.pob4='',
+        rl.source4=''
             )
 
 # Define UI for dataset viewer application.
@@ -175,7 +175,7 @@ ui = fluidPage(
         ),
         tabPanel
         (
-            'Sample Tree Control for Truncated BLS Code Trees',
+            'Sample Tree Control for Depth Limited BLS Code Trees',
             sidebarLayout
             (
                 sidebarPanel
