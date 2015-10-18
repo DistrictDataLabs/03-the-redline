@@ -179,11 +179,37 @@ MakeCodeTree = function(CodeData,MaxDepth=999999) # data.table version of an app
         ret
     } # PopulateSubDisplayTree
 
+    GetSelectedCodeDef = function(ShinyTreeSelected) # See app.R for an example of ShinyTreeSelected
+    {
+        RowNum = 0
+        ret = NULL
+        if (length(ShinyTreeSelected) > 0) # Remove the selection containing list
+        {
+            ShinyTreeSelected = ShinyTreeSelected[[1]]
+            while(is.list(ShinyTreeSelected)) # Walk down the tree
+            {
+                RootDisplayText = names(ShinyTreeSelected) # Matching display text
+                Children = AugmentedCodeData[parent_rn == RowNum] # among the children of RowNum
+                RowNum = Children[which(Children[,DisplayTextColumn,with=F]==RootDisplayText),]$rn
+                ret = AugmentedCodeData[RowNum,]
+                ShinyTreeSelected = ShinyTreeSelected[[1]]
+            }
+        }
+        if (is.null(ret))
+        {
+            # Default to the 'All' entry
+            CurrentCodeDef = AugmentedCodeData[1,]
+            ret = CurrentCodeDef
+        }
+        ret
+    } # GetSelectedCodeDef
+
     # These are the only public methods for a CodeTree
 
     list(GetAugmentedCodeData = GetAugmentedCodeData, # This method is intended for troubleshooting or EDA
          GetCodeTree = GetCodeTree, # This returns the code tree as a nested list, building it and caching it if needed
-         GetDisplayTree = GetDisplayTree # This returns the display text tree as a nested list, building it and caching it if needed.
+         GetDisplayTree = GetDisplayTree, # This returns the display text tree as a nested list, building it and caching it if needed.
+         GetSelectedCodeDef = GetSelectedCodeDef # This returns the selected record from the (augmented) BLS code table, e.g. rl.industry (augmented with rn and parent_rn)
     )
 } # MakeCodeTree
 

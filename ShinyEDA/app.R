@@ -249,7 +249,7 @@ server = function(input, output)
         if (!is.list(ct))
         {
             ct = MakeCodeTree(get(datasetname))
-            FNsT[[datasetname]] = ct
+            FNsT[[datasetname]] <<- ct
         }
         DisplayTree = ct$GetDisplayTree()
         # browser() # Breakpoints seem flaky in Shiny
@@ -264,8 +264,10 @@ server = function(input, output)
         } else
         {
             sel = get_selected(tree)
+            # List of 1 # Names format: list of 1 where name is the selected and path in the attributes
+            #  $ : atomic [1:1] Public administration
+            #   ..- attr(*, "ancestry")= chr [1:2] "All workers" "Service-providing"
             ss = unlist(sel)
-#            browser() # sel is a list of 1, the name of selected node, with the path to the root available as the ancestry attribute.
             if (is.null(ss))
             {
                 selTxtT = 'Nothing selected.'
@@ -302,39 +304,35 @@ server = function(input, output)
         if (!is.list(ct))
         {
             ct = MakeCodeTree(get(datasetname),4) # display_level >= 4 will be ignored
-            FNsS[[datasetname]] = ct
+            FNsS[[datasetname]] <<- ct
         }
         DisplayTree = ct$GetDisplayTree()
         # browser() # Breakpoints seem flaky in Shiny
         DisplayTree
     })
     output$selTxtS <- renderText({
-        datasetname = input$datasetS # Reactive dependency -- doesn't work.
+        datasetname = input$datasetS
         tree = input$treeS
         if (is.null(tree))
         {
             'None'
         } else
         {
-            sel = get_selected(tree)
-            ss = unlist(sel)
-#            browser() # sel is a list of 1, the name of selected node, with the path to the root available as the ancestry attribute.
-            if (is.null(ss))
+            sel = get_selected(tree,format='slices')
+            # List of 1 # Slices Format: all lists, no attributes.
+            #  $ :List of 1
+            #   ..$ All workers:List of 1
+            #   .. ..$ Service-providing:List of 1
+            #   .. .. ..$ Professional and business services: num 0
+            ct = FNsS[[datasetname]]
+            CodeDef = ct$GetSelectedCodeDef(sel)
+            if (is.null(CodeDef))
             {
-                selTxtS = 'Nothing selected.'
-            }
-            else if(T)
-            {
-                selTxtS = ss
-            } # Below here is WIP
-            else if(is.na(as.integer(ss)))
-            {
-                selTxtS = paste0('Cannot find sort_sequence ',ss)
+                selTxtS = 'Nothing selected'
             }
             else
             {
-                adt = FNsS[[1]]$GetAugmentedCodeData()
-                selTxtS = adt[as.integer(ss)]$industry_text
+                selTxtS = paste0(CodeDef$industry_code,':  ',CodeDef$industry_text)
             }
             selTxtS
         }
