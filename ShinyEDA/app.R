@@ -85,9 +85,9 @@ if (ListRLFilesFromDropBox)
 }
 
 FNsT = list(
-        rl.event='',
 #         rl.category='', # Doesn't work yet; don't know why
         rl.industry='',
+        rl.event='', # Want industry to be the default so show selected works
         rl.nature='',
 #        rl.occupation='', # Doesn't work yet; 17 'roots' but so far only 1 is supported
         rl.pob='',
