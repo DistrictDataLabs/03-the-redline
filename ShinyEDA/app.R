@@ -95,9 +95,9 @@ FNsT = list(
             )
 
 FNsS = list(
-        rl.event4='', # Want industry to be the default so show selected works
 #         rl.category='', # Doesn't work yet; don't know why
         rl.industry4='',
+        rl.event4='', # Want industry to be the default so show selected works
         rl.nature4='',
 #        rl.occupation='', # Doesn't work yet; 17 'roots' but so far only 1 is supported
         rl.pob4='',
@@ -107,6 +107,8 @@ FNsS = list(
 FNsP = list(
         rl.industry4=''
             )
+
+CondLoadDataTable('SeriesYearIndustryCounts')
 
 # Define UI for dataset viewer application.
 
@@ -206,12 +208,13 @@ ui = fluidPage(
                 sidebarPanel
                 (
                     selectInput('datasetP', 'Choose a data.table:',
-                                choices = names(FNsP))
+                                choices = names(FNsP)),
+                    numericInput('yearsP','Number of years to predict:',3,min=1,max=9)
                 ),
                 mainPanel
                 (
-                    h3('Data Structure'),
-                    verbatimTextOutput('strP'),
+                    h3('Injuries (Series) by Year for the Selected Industry'),
+                    plotOutput('plot1P'),
                     h3('Currently Selected:'),
                     verbatimTextOutput('selTxtP'),
                     hr(),
@@ -259,6 +262,7 @@ server = function(input, output)
         summary(dataset)
     })
     output$viewR = renderTable({head(datasetInputR(), n = input$obsR)},include.rownames=F)
+
     # Code Tree Hierarchy
     datasetInputT = reactive({
         CondLoadDataTable(input$datasetT)
@@ -371,11 +375,23 @@ server = function(input, output)
     datasetInputP = reactive({
         CondLoadDataTable(input$datasetP)
     })
-    output$strP = renderPrint({
-        dataset = datasetInputP()
-        str(dataset)
-    })
+    # output$viewB = renderTable({head(datasetInputB(), n = input$obsB)})
 
+    output$plot1P = renderPlot({
+        selTxtP = SelectionDisplayText()
+        selCodeP = sub(':.*','',selTxtP)
+        selData = SeriesYearIndustryCounts[industry_code==selCodeP]
+        if (nrow(selData) > 0)
+        {
+            selMod = lm(N~year,data=selData)
+            predCount = input$yearsP
+            predYears = data.frame(year=c(1:predCount))
+            predYears$year = predYears$year + 2013
+            selPred = predict(selMod,predYears)
+            df=data.frame(year=c(selData$year,predYears$year),SeriesCount=c(selData$N,selPred),DataOrPrediction=as.factor(c(rep(1,3),rep(2,predCount))))
+            plot(SeriesCount~year,data=df,col=DataOrPrediction,pch=9,cex=2,xlab='Year. BLS data in black and predictions in red.',ylab='Series Count')
+        }
+    })
     output$treeP <- renderTree({
         datasetname = input$datasetP
         ct = FNsP[[datasetname]]
@@ -388,7 +404,7 @@ server = function(input, output)
         # browser() # Breakpoints seem flaky in Shiny
         DisplayTree
     })
-    output$selTxtP <- renderText({
+    SelectionDisplayText = reactive({
         datasetname = input$datasetP
         tree = input$treeP
         if (is.null(tree))
@@ -416,6 +432,9 @@ server = function(input, output)
             }
             selTxtP
         }
+    })
+    output$selTxtP <- renderText({
+        selTxtP = SelectionDisplayText()
     })
 
 } # server
