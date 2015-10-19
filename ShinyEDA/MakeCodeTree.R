@@ -18,6 +18,12 @@ MakeCodeTree = function(CodeData,MaxDepth=999999) # data.table version of an app
     MyMaxDepth = MaxDepth
     # This will be sorted by sort_sequence then 2 variables will be added, rn and parent_rn.
     AugmentedCodeData = CodeData
+    # The column number of the descritptive field, e.g., industry_text.
+    DisplayTextColumn = grep('_text$',names(CodeData))
+    DisplayTextColumnName = names(CodeData)[DisplayTextColumn] # Guess
+    # The column number of the BLS code field, e.g., industry_code.
+    CodeColumn = grep('_code$',names(CodeData))
+    CodeColumnName = names(CodeData)[CodeColumn] # Guess
     # This will be a list with 2 named elements. "me" will contain the first record of the
     # code table. "children" will be a list of similar 2 elements lists, each of which
     # corresponds to the direct children of the first element/row. Repeat for each element
@@ -27,15 +33,22 @@ MakeCodeTree = function(CodeData,MaxDepth=999999) # data.table version of an app
     # structure by shinyTree with the element names becoming node display text and with
     # non list valued element values ignored. Non list valued element's names are leaves.
     CachedDisplayTree = NULL
-    # The column number of the descritptive field, e.g., industry_text.
-    DisplayTextColumn = grep('_text$',names(CodeData))
-    DisplayTextColumnName = names(CodeData)[DisplayTextColumn] # Guess
 
     GetAugmentedCodeData = function()
     {
         CondCacheCodeTree() # If needed calls CacheParentRNs() which adds variables rn and parent_rn
         AugmentedCodeData
     } # GetAugmentedCodeData
+
+    GetDisplayTextColumn = function()
+    {
+        DisplayTextColumn
+    }
+
+    GetCodeColumn = function()
+    {
+        CodeColumn
+    }
 
     GetCodeTree = function()
     {
@@ -208,8 +221,10 @@ MakeCodeTree = function(CodeData,MaxDepth=999999) # data.table version of an app
 
     list(GetAugmentedCodeData = GetAugmentedCodeData, # This method is intended for troubleshooting or EDA
          GetCodeTree = GetCodeTree, # This returns the code tree as a nested list, building it and caching it if needed
-         GetDisplayTree = GetDisplayTree, # This returns the display text tree as a nested list, building it and caching it if needed.
-         GetSelectedCodeDef = GetSelectedCodeDef # This returns the selected record from the (augmented) BLS code table, e.g. rl.industry (augmented with rn and parent_rn)
+         GetDisplayTree = GetDisplayTree, # This returns the display text tree as a nested list, building it and caching it if needed
+         GetSelectedCodeDef = GetSelectedCodeDef, # This returns the selected record from the (augmented) BLS code table, e.g. rl.industry (augmented with rn and parent_rn)
+         GetDisplayTextColumn = GetDisplayTextColumn, # This returns the column number of the variable that holds the display text for the BLS code
+         GetCodeColumn = GetCodeColumn # This returns the column number of the variable field that holds the actual BLS code itself
     )
 } # MakeCodeTree
 

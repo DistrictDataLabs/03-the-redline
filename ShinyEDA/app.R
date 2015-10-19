@@ -95,13 +95,17 @@ FNsT = list(
             )
 
 FNsS = list(
+        rl.event4='', # Want industry to be the default so show selected works
 #         rl.category='', # Doesn't work yet; don't know why
         rl.industry4='',
-        rl.event4='', # Want industry to be the default so show selected works
         rl.nature4='',
 #        rl.occupation='', # Doesn't work yet; 17 'roots' but so far only 1 is supported
         rl.pob4='',
         rl.source4=''
+            )
+
+FNsP = list(
+        rl.industry4=''
             )
 
 # Define UI for dataset viewer application.
@@ -193,6 +197,27 @@ ui = fluidPage(
                     shinyTree('treeS')
                 )
             )
+        ),
+        tabPanel
+        (
+            'Injury Predictions by Industry',
+            sidebarLayout
+            (
+                sidebarPanel
+                (
+                    selectInput('datasetP', 'Choose a data.table:',
+                                choices = names(FNsP))
+                ),
+                mainPanel
+                (
+                    h3('Data Structure'),
+                    verbatimTextOutput('strP'),
+                    h3('Currently Selected:'),
+                    verbatimTextOutput('selTxtP'),
+                    hr(),
+                    shinyTree('treeP')
+                )
+            )
         )
     ) # tabsetPanel
 ) # ui
@@ -282,8 +307,10 @@ server = function(input, output)
             }
             else
             {
-                adt = FNsT[[1]]$GetAugmentedCodeData()
-                selTxtT = adt[as.integer(ss)]$industry_text
+                ct = FNsT[[1]]
+                DisplayTextColumn = ct$GetDisplayTextColumn()
+                adt = ct$GetAugmentedCodeData()
+                selTxtT = adt[as.integer(ss),DisplayTextColumn,with=F]
             }
             selTxtT
         }
@@ -326,15 +353,68 @@ server = function(input, output)
             #   .. .. ..$ Professional and business services: num 0
             ct = FNsS[[datasetname]]
             CodeDef = ct$GetSelectedCodeDef(sel)
+            DisplayTextColumn = ct$GetDisplayTextColumn()
+            CodeColumn = ct$GetCodeColumn()
             if (is.null(CodeDef))
             {
                 selTxtS = 'Nothing selected'
             }
             else
             {
-                selTxtS = paste0(CodeDef$industry_code,':  ',CodeDef$industry_text)
+                selTxtS = paste0(CodeDef[1,CodeColumn,with=F],':  ',CodeDef[1,DisplayTextColumn,with=F])
             }
             selTxtS
+        }
+    })
+
+    # Injury Predictions by Industry
+    datasetInputP = reactive({
+        CondLoadDataTable(input$datasetP)
+    })
+    output$strP = renderPrint({
+        dataset = datasetInputP()
+        str(dataset)
+    })
+
+    output$treeP <- renderTree({
+        datasetname = input$datasetP
+        ct = FNsP[[datasetname]]
+        if (!is.list(ct))
+        {
+            ct = MakeCodeTree(get(datasetname),4) # display_level >= 4 will be ignored
+            FNsS[[datasetname]] <<- ct
+        }
+        DisplayTree = ct$GetDisplayTree()
+        # browser() # Breakpoints seem flaky in Shiny
+        DisplayTree
+    })
+    output$selTxtP <- renderText({
+        datasetname = input$datasetP
+        tree = input$treeP
+        if (is.null(tree))
+        {
+            'None'
+        } else
+        {
+            sel = get_selected(tree,format='slices')
+            # List of 1 # Slices Format: all lists, no attributes.
+            #  $ :List of 1
+            #   ..$ All workers:List of 1
+            #   .. ..$ Service-providing:List of 1
+            #   .. .. ..$ Professional and business services: num 0
+            ct = FNsS[[datasetname]]
+            CodeDef = ct$GetSelectedCodeDef(sel)
+            DisplayTextColumn = ct$GetDisplayTextColumn()
+            CodeColumn = ct$GetCodeColumn()
+            if (is.null(CodeDef))
+            {
+                selTxtP = 'Nothing selected'
+            }
+            else
+            {
+                selTxtP = paste0(CodeDef[1,CodeColumn,with=F],':  ',CodeDef[1,DisplayTextColumn,with=F])
+            }
+            selTxtP
         }
     })
 
