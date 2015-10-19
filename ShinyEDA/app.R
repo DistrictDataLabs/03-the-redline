@@ -104,6 +104,12 @@ FNsS = list(
         rl.source4=''
             )
 
+FNsP = list(
+        rl.industry4=''
+            )
+
+CondLoadDataTable('SeriesYearIndustryCounts')
+
 # Define UI for dataset viewer application.
 
 ui = fluidPage(
@@ -193,6 +199,28 @@ ui = fluidPage(
                     shinyTree('treeS')
                 )
             )
+        ),
+        tabPanel
+        (
+            'Injury Predictions by Industry',
+            sidebarLayout
+            (
+                sidebarPanel
+                (
+                    selectInput('datasetP', 'Choose a data.table:',
+                                choices = names(FNsP)),
+                    numericInput('yearsP','Number of years to predict:',3,min=1,max=9)
+                ),
+                mainPanel
+                (
+                    h3('Injuries (Series) by Year for the Selected Industry'),
+                    plotOutput('plot1P'),
+                    h3('Currently Selected:'),
+                    verbatimTextOutput('selTxtP'),
+                    hr(),
+                    shinyTree('treeP')
+                )
+            )
         )
     ) # tabsetPanel
 ) # ui
@@ -234,6 +262,7 @@ server = function(input, output)
         summary(dataset)
     })
     output$viewR = renderTable({head(datasetInputR(), n = input$obsR)},include.rownames=F)
+
     # Code Tree Hierarchy
     datasetInputT = reactive({
         CondLoadDataTable(input$datasetT)
@@ -282,8 +311,10 @@ server = function(input, output)
             }
             else
             {
-                adt = FNsT[[1]]$GetAugmentedCodeData()
-                selTxtT = adt[as.integer(ss)]$industry_text
+                ct = FNsT[[1]]
+                DisplayTextColumn = ct$GetDisplayTextColumn()
+                adt = ct$GetAugmentedCodeData()
+                selTxtT = adt[as.integer(ss),DisplayTextColumn,with=F]
             }
             selTxtT
         }
@@ -326,16 +357,84 @@ server = function(input, output)
             #   .. .. ..$ Professional and business services: num 0
             ct = FNsS[[datasetname]]
             CodeDef = ct$GetSelectedCodeDef(sel)
+            DisplayTextColumn = ct$GetDisplayTextColumn()
+            CodeColumn = ct$GetCodeColumn()
             if (is.null(CodeDef))
             {
                 selTxtS = 'Nothing selected'
             }
             else
             {
-                selTxtS = paste0(CodeDef$industry_code,':  ',CodeDef$industry_text)
+                selTxtS = paste0(CodeDef[1,CodeColumn,with=F],':  ',CodeDef[1,DisplayTextColumn,with=F])
             }
             selTxtS
         }
+    })
+
+    # Injury Predictions by Industry
+    datasetInputP = reactive({
+        CondLoadDataTable(input$datasetP)
+    })
+    # output$viewB = renderTable({head(datasetInputB(), n = input$obsB)})
+
+    output$plot1P = renderPlot({
+        selTxtP = SelectionDisplayText()
+        selCodeP = sub(':.*','',selTxtP)
+        selData = SeriesYearIndustryCounts[industry_code==selCodeP]
+        if (nrow(selData) > 0)
+        {
+            selMod = lm(N~year,data=selData)
+            predCount = input$yearsP
+            predYears = data.frame(year=c(1:predCount))
+            predYears$year = predYears$year + 2013
+            selPred = predict(selMod,predYears)
+            df=data.frame(year=c(selData$year,predYears$year),SeriesCount=c(selData$N,selPred),DataOrPrediction=as.factor(c(rep(1,3),rep(2,predCount))))
+            plot(SeriesCount~year,data=df,col=DataOrPrediction,pch=9,cex=2,xlab='Year. BLS data in black and predictions in red.',ylab='Series Count')
+        }
+    })
+    output$treeP <- renderTree({
+        datasetname = input$datasetP
+        ct = FNsP[[datasetname]]
+        if (!is.list(ct))
+        {
+            ct = MakeCodeTree(get(datasetname),4) # display_level >= 4 will be ignored
+            FNsS[[datasetname]] <<- ct
+        }
+        DisplayTree = ct$GetDisplayTree()
+        # browser() # Breakpoints seem flaky in Shiny
+        DisplayTree
+    })
+    SelectionDisplayText = reactive({
+        datasetname = input$datasetP
+        tree = input$treeP
+        if (is.null(tree))
+        {
+            'None'
+        } else
+        {
+            sel = get_selected(tree,format='slices')
+            # List of 1 # Slices Format: all lists, no attributes.
+            #  $ :List of 1
+            #   ..$ All workers:List of 1
+            #   .. ..$ Service-providing:List of 1
+            #   .. .. ..$ Professional and business services: num 0
+            ct = FNsS[[datasetname]]
+            CodeDef = ct$GetSelectedCodeDef(sel)
+            DisplayTextColumn = ct$GetDisplayTextColumn()
+            CodeColumn = ct$GetCodeColumn()
+            if (is.null(CodeDef))
+            {
+                selTxtP = 'Nothing selected'
+            }
+            else
+            {
+                selTxtP = paste0(CodeDef[1,CodeColumn,with=F],':  ',CodeDef[1,DisplayTextColumn,with=F])
+            }
+            selTxtP
+        }
+    })
+    output$selTxtP <- renderText({
+        selTxtP = SelectionDisplayText()
     })
 
 } # server

@@ -429,3 +429,21 @@ summary(junkFit)
 CondLoadDataTable('SeriesYearIndustryCounts')
 SeriesYearIndustryCounts[4]$industry_code == ''
 SeriesYearIndustryCounts[industry_code != '']
+
+
+rm(SeriesYearIndustryCounts)
+CondLoadDataTable('SeriesYearIndustryCounts')
+SeriesYearIndustryCounts$year = as.integer(as.character(SeriesYearIndustryCounts$year))
+str(SeriesYearIndustryCounts)
+qplot(N,year,data=SeriesYearIndustryCounts[industry_code=='0'])
+plot(N~year,data=SeriesYearIndustryCounts[industry_code=='0'],type='p')
+mod=lm(N~year,data=SeriesYearIndustryCounts[industry_code=='0'])
+summary(mod)
+plot(mod)
+lines(mod)
+
+test=data.frame(year=c(2014,2015,2016))
+pred=predict(mod,test)
+df=data.frame(year=c(SelectedData$year,test$year),SeriesCount=c(SelectedData$N,pred),DataOrPrediction=as.factor(c(rep(1,3),rep(2,3))))
+plot(SeriesCount~year,data=df,col=DataOrPrediction,pch=9,cex=2,xlab='Year. BLS data in black and predictions in red.',ylab='Series Count')
+
