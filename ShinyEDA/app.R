@@ -325,11 +325,13 @@ server = function(input, output)
         CondLoadDataTable(input$datasetS)
     })
     output$strS = renderPrint({
+        ds = datasetInputS() # For the reactivity
         dataset = datasetInputS()
         str(dataset)
     })
 
     output$treeS <- renderTree({
+        ds = datasetInputS() # For the reactivity
         datasetname = input$datasetS
         ct = FNsS[[datasetname]]
         if (!is.list(ct))
@@ -342,6 +344,7 @@ server = function(input, output)
         DisplayTree
     })
     output$selTxtS <- renderText({
+        ds = datasetInputS() # For the reactivity
         datasetname = input$datasetS
         tree = input$treeS
         if (is.null(tree))
@@ -375,9 +378,9 @@ server = function(input, output)
     datasetInputP = reactive({
         CondLoadDataTable(input$datasetP)
     })
-    # output$viewB = renderTable({head(datasetInputB(), n = input$obsB)})
 
     output$plot1P = renderPlot({
+        ds = datasetInputP() # For the reactivity
         selTxtP = SelectionDisplayText()
         selCodeP = sub(':.*','',selTxtP)
         selData = SeriesYearIndustryCounts[industry_code==selCodeP]
@@ -393,6 +396,7 @@ server = function(input, output)
         }
     })
     output$treeP <- renderTree({
+        ds = datasetInputP() # For the reactivity
         datasetname = input$datasetP
         ct = FNsP[[datasetname]]
         if (!is.list(ct))
@@ -405,6 +409,7 @@ server = function(input, output)
         DisplayTree
     })
     SelectionDisplayText = reactive({
+        ds = datasetInputP() # For the reactivity
         datasetname = input$datasetP
         tree = input$treeP
         if (is.null(tree))
