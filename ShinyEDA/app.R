@@ -268,7 +268,7 @@ ui = fluidPage(
             '(Left) click on the', tags$b('Injury Predictions by Industry'),'tab in the upper left to return to the application.',
             br(),br(),
             'The source code for this application is available for review at that',
-            tags$a(href='https://github.com/WatHughes/CP_Shiny',target='_blank','GitHub Repo'),
+            tags$a(href='https://github.com/WatHughes/03-the-redline',target='_blank','GitHub Repo'),
             'for this application.',
             br(),br(),
             'To calculate the predictions, first the selected data points (specified by',
