@@ -155,3 +155,6 @@ Application URL: https://wathughes.shinyapps.io/ShinyEDA
 Project source code: https://github.com/WatHughes/03-the-redline
 <br>
 District Data Labs: http://www.districtdatalabs.com/
+<br>
+This presentation: http://wathughes.github.io/03-the-redline/DDL3Pitchfest
+
