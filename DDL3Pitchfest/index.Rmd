@@ -153,3 +153,5 @@ BLS Injuries, Illnesses, and Fatalities Home: http://www.bls.gov/iif/
 Application URL: https://wathughes.shinyapps.io/ShinyEDA
 <br>
 Project source code: https://github.com/WatHughes/03-the-redline
+<br>
+District Data Labs: http://www.districtdatalabs.com/
