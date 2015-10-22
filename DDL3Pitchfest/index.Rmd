@@ -1,0 +1,155 @@
+---
+title       : Visualizing Injury Data
+subtitle    : District Data Labs Incubator 3 Team RedLine
+author      : Wat Hughes
+job         : Consultant, Creative Data
+framework   : deckjs        # {io2012, html5slides, shower, dzslides, ...}
+highlighter : highlight.js  # {highlight.js, prettify, highlight}
+hitheme     : tomorrow      # 
+widgets     : []            # {mathjax, quiz, bootstrap}
+mode        : standalone # {standalone, draft}
+knit        : slidify::knit2slides
+---
+
+## Visualizing Injury Data
+
+A Product by Team RedLine
+<br>
+District Data Labs Incubator 3
+<br>
+Pitchfest, 10/24/15
+
+```{r,echo=F}
+# Keep these handy to save brain cells:
+# library(slidify)
+# library(markdown)
+# setwd('./DDL3Pitchfest')
+# slidify('index.Rmd')
+# browseURL('index.html')
+# publish_rpubs(title='DDL3Pitchfest','index.html') # Sigh
+# rpubsUpload('DDL3Pitchfest','index.html',id=NULL,properties=list(),method=getOption('rpubs.upload.method','internal'))
+# <Continue>
+# or
+# browseURL(rpubsUpload('DDL3Pitchfest','index.html',id=NULL,properties=list(),method=getOption('rpubs.upload.method','internal'))$continueUrl)
+```
+
+
+---
+
+
+## Who is Team RedLine?
+
+<h3>The Team</h3>
+Felicia Charlot, MA, Research Analyst, US Dept. of Labor
+<br>
+Ian Cummins, MPA, MBA, Product Account Manager, Inovalon
+<br>
+Wat Hughes, JHU DS Specialization (in progress), Consultant, Creative Data
+<br>
+Wayne Liu, Research Fellow, National Cancer Institute
+<h3>Our BLS Sponsors</h3>
+Emily Liddel
+<br>
+Mark Zak
+<br>
+Miriam Birdwell
+<h3>Our Guide</h3>
+Laura Lorenz
+
+---
+
+
+## What did we try to do?
+
+
+- Build a data product
+<br>
+- That would bring to life the BLS Occupational Injuries and Illnesses Characteristics Data
+<br>
+- So that occupational safety professionals could better use that data to inform the design and delivery of workplace injury/illness prevention programs
+<br>
+- It would do so by enabling novel visualizations of the BLS data
+<br>
+- And by focusing on work and case characteristics
+<br>
+- To highlight specific trends or thematic issues, such as risk factors for older workers
+
+
+---
+
+
+## What did we do?
+
+- In conjunction with our sponsors, outlined a Minimum Viable Product (MVP) that would be very valuable to the targeted users (10 points here for Utility, right?)
+<br>
+- Outlined a technical approach: clean and stage the data using R then build the data product as a web application using Shiny (5 more here for Technical Design, right?)
+<br>
+- Did some research on likely visualizations; pretty much anything than can be done in R can be easily deployed via Shiny (2.5 more for Novelty, eh?)
+<br>
+- Data cleaning and some Exploratory Data Analysis in R (see GitHub for the details)
+<br>
+- Many of the dimensions of the worker and case data are naturally hierarchical so we researched Shiny approaches to empower the user slice and dice based on those (2.5 more for Novelty, a?)
+<br>
+- Sketched and discussed some possible application wireframes
+<br>
+- Summary: we started but we did not get very close to a finished product
+
+
+---
+
+
+## Demo
+
+- ShinyTree
+<br>
+- Data loading and cleaning
+<br>
+- hosted at ShinyApps.io for free!
+
+https://wathughes.shinyapps.io/ShinyEDA
+
+
+---
+
+
+## Lessons Learned Technical
+
+- The free Shiny instances cannot come close to handling the BLS data. By way of comparison, a VM with 32GB had no problems; a physical computer with 8 GB was SLOW using data.table, failed using R's native data.frame
+<br>
+- Because of inconsistancies in the data files, neither read.table nor fread could cleanly load all the BLS data files. Mixing and matching worked, (e.g., one function for the headers and another for the data, etc.)
+<br>
+- ShinyTree is slow and very primitive, but can be made to work
+<br>
+- The BLS files encode the hierarchies, but only indirectly so much more work is needed to build the trees for the GUI than one would expect
+
+
+---
+
+
+## What Went Wrong
+
+- None of the team members allocated enough time to complete tasks when needed
+<br>
+- We generally assigned tasks to team members so as to take us out of our comfort zones. That would have ensured that we each got maxiumum value from the DDL program if we had had the extra time to put in both to complete tasks with which we had limited experience while also putting in the extra hours to mentor each other. In hindsight, this approach compounded the first problem
+<br>
+- We naturally adopted a concensus management approach which worked well in that we had no trouble forming concensus and moving forward but worked poorly in that it increased the negative impact to the project when 'real life' happened and team members were unavailable
+<br>
+- We were slow in establishing effective communication with our sponsors. Again, extra time and effort might have overcome this but in reality we never caught up to where we needed to be schedule wise
+
+--- 
+
+
+## References
+
+Source datafiles: http://download.bls.gov/pub/time.series/cs
+<br>
+Data documentation part 1: http://download.bls.gov/pub/time.series/cs/cs.txt 
+<br>
+Data documentation part 2: http://www.bls.gov/iif/oiics_manual_2010.pdf
+<br>
+BLS Injuries, Illnesses, and Fatalities Home: http://www.bls.gov/iif/
+<br>
+<br>
+Application URL: https://wathughes.shinyapps.io/ShinyEDA
+<br>
+Project source code: https://github.com/WatHughes/03-the-redline
