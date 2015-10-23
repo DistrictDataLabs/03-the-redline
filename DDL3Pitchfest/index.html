@@ -113,7 +113,9 @@ Miriam Birdwell</p>
   <ul>
 <li>ShinyTree
 <br></li>
-<li>Data loading and cleaning
+<li>Data loading and cleaning (incomplete, do not rely on this data)
+<br></li>
+<li>Proof of concept, using lm  to compute the least squares linear fit that is used to show how predictions might be useful
 <br></li>
 <li>Hosted at ShinyApps.io for free!</li>
 </ul>
@@ -130,7 +132,7 @@ Miriam Birdwell</p>
 <br></li>
 <li>ShinyTree is slow and very primitive, but can be made to work
 <br></li>
-<li>The BLS files encode the hierarchies, but only indirectly so much more work is needed to build the trees for the GUI than one would expect</li>
+<li>The BLS files encode the hierarchies, but only indirectly, with no explicit tie of a grouping (parent node) to its members (other groups and/or leaves). Instead, the files provide the sort order and tree depth of each node so the hierachy can be inferred from the &#39;jumps&#39; in tree. Not suprisingly, ShinyTree wants a hieararchy (as a nested list) which also models the way users think of an use the hierarchies</li>
 </ul>
 
 </section>

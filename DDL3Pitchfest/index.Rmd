@@ -31,6 +31,9 @@ Pitchfest, 10/24/15
 # <Continue>
 # or
 # browseURL(rpubsUpload('DDL3Pitchfest','index.html',id=NULL,properties=list(),method=getOption('rpubs.upload.method','internal'))$continueUrl)
+# and/or
+# Commit, push to master, push to gh-pages:
+# http://wathughes.github.io/03-the-redline/DDL3Pitchfest
 ```
 
 
@@ -102,7 +105,9 @@ Laura Lorenz
 
 - ShinyTree
 <br>
-- Data loading and cleaning
+- Data loading and cleaning (incomplete, do not rely on this data)
+<br>
+- Proof of concept, using lm  to compute the least squares linear fit that is used to show how predictions might be useful
 <br>
 - Hosted at ShinyApps.io for free!
 
@@ -120,7 +125,7 @@ https://wathughes.shinyapps.io/ShinyEDA
 <br>
 - ShinyTree is slow and very primitive, but can be made to work
 <br>
-- The BLS files encode the hierarchies, but only indirectly so much more work is needed to build the trees for the GUI than one would expect
+- The BLS files encode the hierarchies, but only indirectly, with no explicit tie of a grouping (parent node) to its members (other groups and/or leaves). Instead, the files provide the sort order and tree depth of each node so the hierachy can be inferred from the 'jumps' in tree. Not suprisingly, ShinyTree wants a hieararchy (as a nested list) which also models the way users think of an use the hierarchies
 
 
 ---
