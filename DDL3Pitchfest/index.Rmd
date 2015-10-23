@@ -47,7 +47,7 @@ Ian Cummins, MPA, MBA, Product Account Manager, Inovalon
 Wat Hughes, JHU DS Specialization (in progress), Consultant, Creative Data
 <br>
 Wayne Liu, Research Fellow, National Cancer Institute
-<h3>Our BLS Sponsors</h3>
+<h3>Our Bureau of Labor Statistics (BLS) Sponsors</h3>
 Emily Liddel
 <br>
 Mark Zak
@@ -88,7 +88,7 @@ Laura Lorenz
 <br>
 - Data cleaning and some Exploratory Data Analysis in R (see GitHub for the details)
 <br>
-- Many of the dimensions of the worker and case data are naturally hierarchical so we researched Shiny approaches to empower the user slice and dice based on those (2.5 more for Novelty, a?)
+- Many of the dimensions of the worker and case data are naturally hierarchical so we researched Shiny approaches to empower the user slice and dice based on those (2.5 more for Novelty, eh?)
 <br>
 - Sketched and discussed some possible application wireframes
 <br>
@@ -104,7 +104,7 @@ Laura Lorenz
 <br>
 - Data loading and cleaning
 <br>
-- hosted at ShinyApps.io for free!
+- Hosted at ShinyApps.io for free!
 
 https://wathughes.shinyapps.io/ShinyEDA
 
@@ -112,7 +112,7 @@ https://wathughes.shinyapps.io/ShinyEDA
 ---
 
 
-## Lessons Learned Technical
+## Lessons Learned: Technical
 
 - The free Shiny instances cannot come close to handling the BLS data. By way of comparison, a VM with 32GB had no problems; a physical computer with 8 GB was SLOW using data.table, failed using R's native data.frame
 <br>
@@ -126,13 +126,13 @@ https://wathughes.shinyapps.io/ShinyEDA
 ---
 
 
-## What Went Wrong
+## Lessons Learned: Organizational
 
 - None of the team members allocated enough time to complete tasks when needed
 <br>
-- We generally assigned tasks to team members so as to take us out of our comfort zones. That would have ensured that we each got maxiumum value from the DDL program if we had had the extra time to put in both to complete tasks with which we had limited experience while also putting in the extra hours to mentor each other. In hindsight, this approach compounded the first problem
+- We generally assigned tasks to team members so as to take us out of our comfort zones. That would have ensured that we each got maximum value from the DDL program if we had had the extra time to put in both to complete tasks with which we had limited experience while also putting in the extra hours to mentor each other. In hindsight, this approach compounded the first problem
 <br>
-- We naturally adopted a concensus management approach which worked well in that we had no trouble forming concensus and moving forward but worked poorly in that it increased the negative impact to the project when 'real life' happened and team members were unavailable
+- We naturally adopted a consensus management approach which worked well in that we had no trouble forming consensus and moving forward but worked poorly in that it increased the negative impact to the project when 'real life' happened and team members were unavailable
 <br>
 - We were slow in establishing effective communication with our sponsors. Again, extra time and effort might have overcome this but in reality we never caught up to where we needed to be schedule wise
 
@@ -157,4 +157,5 @@ Project source code: https://github.com/WatHughes/03-the-redline
 District Data Labs: http://www.districtdatalabs.com/
 <br>
 This presentation: http://wathughes.github.io/03-the-redline/DDL3Pitchfest
-
+<br>
+ShinyTree: https://github.com/trestletech/shinyTree
